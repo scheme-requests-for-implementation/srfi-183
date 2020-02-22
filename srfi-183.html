@@ -2,68 +2,94 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>SRFI</title>
+    <title>SRFI 183: Another format procedure, Fox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/srfi.css" type="text/css" />
     <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png" />
+    <style>
+     .paragraph-list li {
+       margin-bottom: 1em;
+     }
+     .references a {
+       display: block;
+       margin: 0.5em 0;
+     }
+     .references td:first-child {
+       vertical-align: top;
+       width: 5em;
+     }
+    </style>
   </head>
 
 <body>
 
 <h1>Title</h1>
 
-Fox
+Another format procedure, Fox
 
 <h1>Author</h1>
 
 Joo ChurlSoo
 
+<h1>Status</h1>
 
-<h1>Changes</h1>
-<pre>
-The optional arguments of the original CAT procedure were divided into three
-groups; arguments only for the number type of &lt;object&gt;, arguments for all
-types except the number type of &lt;object&gt;, and arguments for all types of
-&lt;object&gt;.  This complexity can make users confused.
-Those of this revised one are divided into two groups; arguments only for the
-number type of &lt;object&gt; and arguments for all types of &lt;object&gt;.
-This simplicity also makes &lt;writer&gt; to be able to substitute for &lt;converter&gt;.
-The &lt;precision&gt; actually serves as ~G of Common Lisp's FORMAT and %G of C's
-PRINTF.  The &lt;point&gt; of this revised one, an additional optional argument,
-serves as ~F or ~E of Common Lisp's FORMAT and %F or %E of C's PRINTF.
-This revised CAT procedure, Fox is for speed up of non-number type of object.
-For the purpose, the optional arguments only for the number type of object
-integrate into a list type argument, &lt;list-for-number&gt;.
-Additional extensions:
-1. All optional arguments can be applied to the number type of &lt;object&gt;.
-2. The default value of &lt;writer&gt; is DISPLAY procedure.
-3. The &lt;width&gt; is an integer, and the &lt;precision&gt; is a non-negative exact
-   integer.
-4. The new optional arguments, &lt;point&gt; ('fixed or 'floating), &lt;pre-string&gt;,
-   and &lt;post-string&gt; are added.
-5. The &lt;converter&gt; is integrated into the &lt;writer&gt;.
-6. The &lt;take&gt; and &lt;pipe&gt; are integrated into a new argument, &lt;converter&gt;.
-7. The &lt;separator&gt; is changed from a list to a vector whose elements are a
-   string and a non-zero exact integer.
-8. Infinities and nans of R6RS are supported.
-</pre>
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+183+at+srfi+dotschemers+dot+org">srfi-183@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-183">archive</a>.</p>
+<ul>
+  <li>Received: 2020/2/21</li>
+  <li>60-day deadline: 2020/4/22</li>
+  <li>Draft #1 published: 2020/2/22</li>
+</ul>
 
 <h1>Abstract</h1>
 
-This introduces Fox procedure that takes one object as the first argument
-and accepts a variable number of optional arguments, and returns a string.
+<p>This SRFI introduces the formatting procedure Fox ("format of X"),
+  which takes one required argument and a variable number of additional
+  arguments and returns a formatted string.</p>
+
+<h1>Changes from SRFI 54</h1>
+
+<p>This SRFI is based on <a href="https://srfi.schemers.org/srfi-54/">SRFI 54</a>.
+  The optional arguments of the original CAT procedure were divided into
+  three groups: arguments only for the number type of &lt;object&gt;,
+  arguments for all types except the number type of &lt;object&gt;, and
+  arguments for all types of &lt;object&gt;.  This complexity could
+  confuse users.</p>
+
+<p>The optional arguments of this revised SRFI are divided into two
+  groups: arguments only for the number type of &lt;object&gt; and
+  arguments for all types of &lt;object&gt;.  This simplicity also
+  makes &lt;writer&gt; able to substitute for &lt;converter&gt;.  The
+  &lt;precision&gt; actually serves as ~G of Common Lisp's FORMAT and
+  %G of C's PRINTF.  The &lt;point&gt; of this revised one, an
+  additional optional argument, serves as ~F or ~E of Common Lisp's
+  FORMAT and %F or %E of C's PRINTF.  This revised CAT procedure, Fox,
+  is for speedup of non-numeric object types.  For this purpose, the
+  optional arguments only for the number type of object integrate into
+  a list-type argument, &lt;list-for-number&gt;.</p>
+
+<p>Additional extensions:</p>
+
+<ol>
+<li>All optional arguments can be applied to the number type of &lt;object&gt;.</li>
+<li>The default value of &lt;writer&gt; is the DISPLAY procedure.</li>
+<li>The &lt;width&gt; is an integer, and the &lt;precision&gt; is a non-negative exact integer.</li>
+<li>The new optional arguments &lt;point&gt; ('fixed or 'floating), &lt;pre-string&gt;, and &lt;post-string&gt; are added.</li>
+<li>The &lt;converter&gt; is integrated into the &lt;writer&gt;.</li>
+<li>The &lt;take&gt; and &lt;pipe&gt; arguments are integrated into a new argument, &lt;converter&gt;.</li>
+<li>The &lt;separator&gt; is changed from a list to a vector whose elements are a string and a non-zero exact integer.</li>
+<li>The infinities and NaNs of R6RS are supported.</li></ol>
 
 
 <h1>Rationale</h1>
 
-It is difficult to gain a complete consensus for the design of a generic
-formatting procedure that performs a variety of functions provided in C's
-PRINTF and Common lisp's FORMAT.
-<Br>
-One of such ways would be to devise a free non-sequent method that easily
-handles optional arguments, in contrast to the conventional fixed sequent
-method, in order to obtain a handy optional and functional interface.
+<p>It is difficult to gain a complete consensus on the design of a
+  generic formatting procedure that performs a variety of the
+  functions provided by C's PRINTF and Common Lisp's FORMAT.</p>
 
+<p>One way is to devise a free non-sequent method that easily handles
+  optional arguments, in contrast to the conventional fixed sequent
+  method, in order to obtain a handy optional and functional
+  interface.</p>
 
 <h1>Specification</h1>
 <pre>
@@ -85,93 +111,104 @@ method, in order to obtain a handy optional and functional interface.
     [&lt;list-for-number&gt;]			;list
     [&lt;converter&gt;]			;pair
     [&lt;separator&gt;]			;vector
+</pre>
 
-The &lt;list-for-number&gt; is a list whose elements are &lt;precision&gt;, &lt;point&gt;,
-&lt;radix&gt;, &lt;sign&gt;, and &lt;exactness&gt;. And they are effective only for the number
-type of &lt;object&gt;.
-Except &lt;string&gt;s, the order of all other optional arguments does not matter.
-When there is a &lt;string&gt; or &lt;string&gt;s without the other optional arguments,
-the &lt;string&gt; or &lt;string&gt;s are &lt;post-string&gt;.
+<p>The &lt;list-for-number&gt; is a list whose elements are
+  &lt;precision&gt;, &lt;point&gt;, &lt;radix&gt;, &lt;sign&gt;, and
+  &lt;exactness&gt;.  They are effective only for the number type of
+  &lt;object&gt;.</p>
 
-1.  The &lt;object&gt; is any Scheme object.
+<p>Except for &lt;string&gt;s, the order of all other optional
+  arguments does not matter.  When there is a &lt;string&gt; or
+  &lt;string&gt;s without the other optional arguments, the
+  &lt;string&gt; or &lt;string&gt;s are &lt;post-string&gt;.</p>
 
-2.  The &lt;width&gt; is an integer whose absolute value specifies the width of the
-    resulting string.  When the resulting string has fewer characters than the
-    absolute value of &lt;width&gt;, it is placed rightmost with the rest being
-    padded with &lt;char&gt;s, if &lt;width&gt; is positive, or it is placed leftmost with
-    the rest being padded with &lt;char&gt;s, if &lt;width&gt; is negative, or it is
-    placed in the center (near to right in case of positive &lt;width&gt;, or near
-    to left in case of negative &lt;width&gt;) with the rest being padded with
-    &lt;char&gt;s, if &lt;width&gt; is an inexact integer.  On the other hand, when the
-    resulting string has more characters than the absolute value of &lt;width&gt;,
-    the &lt;width&gt; is ignored.  The default value is 0.
+<ol class="paragraph-list">
 
-3.  The &lt;writer&gt; is a procedure of two arguments; &lt;object&gt; and a string port.
-    It writes &lt;object&gt; to the string port.  The default value is DISPLAY
-    procedure.  If you want any objects to be displayed in your own way, you
-    have to define your own &lt;writer&gt;.  Otherwise, they are displayed simply in
-    their evaluated forms.  When &lt;writer&gt; except DISPLAY and WRITE procedures
-    is used, the optional arguments that are effective only for the number type
-    of &lt;object&gt; become ineffective.
+  <li>The &lt;object&gt; is any Scheme object.</li>
 
-4.  The &lt;port&gt; is an output port or a boolean.  If an output port is specified,
-    the resulting string is output into the port.  If &lt;port&gt; is #t, the output
-    port is current output port.  If &lt;port&gt; is #f, the resulting string is
-    returned.  The default value is #f.
+  <li>The &lt;width&gt; is an integer whose absolute value specifies
+    the width of the resulting string.  When the resulting string has
+    fewer characters than the absolute value of &lt;width&gt;, it is
+    placed rightmost with the rest being padded with &lt;char&gt;s, if
+    &lt;width&gt; is positive, or it is placed leftmost with the rest
+    being padded with &lt;char&gt;s, if &lt;width&gt; is negative, or
+    it is placed in the center (near to right in case of positive
+    &lt;width&gt;, or near to left in case of negative &lt;width&gt;)
+    with the rest being padded with &lt;char&gt;s, if &lt;width&gt; is
+    an inexact integer.  On the other hand, when the resulting string
+    has more characters than the absolute value of &lt;width&gt;, the
+    &lt;width&gt; is ignored.  The default value is 0.</li>
 
-5.  The &lt;char&gt; is a padding character.  The default value is #\space.
+  <li>The &lt;writer&gt; is a procedure of two arguments,
+    &lt;object&gt; and a string port.  It writes &lt;object&gt; to the
+    string port.  The default value is the DISPLAY procedure.  If you
+    want any objects to be displayed in your own way, you have to
+    define your own &lt;writer&gt;.  Otherwise, they are displayed
+    simply in their evaluated forms.  When a &lt;writer&gt; other than
+    the DISPLAY and WRITE procedures is used, the optional arguments
+    that are effective only for the number type of &lt;object&gt;
+    become ineffective.</li>
 
-6.  The &lt;converter&gt; is a pair whose car and cdr values are exact integers or
-    strings or procedures; m and n, and the absolute values of m and n are M
-    and N, respectively.
-    First,
-    When the car element is an exact integer, the resulting string takes from
-    the left m-characters, if it is positive, or all the characters but
-    M-characters, if non-positive.
-    When the car element is a string, the string is prefixed.
-    When the car element is a procedure, the procedure takes a string argument
-    and returns a string as a pipe.
-    Second,
-    When the cdr element is an exact integer, the resulting string takes from
-    the right n-characters of the string that is processed by the car element,
-    if it is positive, or all the characters but N-characters, if non-positive.
-    When the cdr element is a string, the string is postfixed to the string
-    that is processed by the car element.
-    When the cdr element is a procedure, the procedure takes the string
-    processed by the car element as an argument and returns a string.
+  <li>The &lt;port&gt; is an output port or a boolean.  If an output
+    port is specified, the resulting string is output to the port.  If
+    &lt;port&gt; is #t, the output port is the current output port.
+    If &lt;port&gt; is #f, the resulting string is returned.  The
+    default value is #f.</li>
 
-7.  The &lt;separator&gt; is a vector whose elements are a string serving as a
-    separator, and a non-zero exact integer; n, and its absolute value is N.
-    The resulting string is separated in every N-characters of the resulting
-    string from right end, if n is positive, or from left end, if n is
-    negative.  Even if n is a negative integer, its absolute value is used for
-    the number type of &lt;object&gt;.  When the number of elements is one, the
-    &lt;separator&gt; is effective only for the number type of &lt;object&gt;.  The
-    default values of the elements are &quot;,&quot; and 3 respectively.
+  <li>The &lt;char&gt; is a padding character.  The default value is
+    #\space.</li>
 
-8.  The &lt;point&gt; is a symbol: fixed or floating.  Each returns a string of
-    decimal fraction or exponential representation.
+  <li>The &lt;converter&gt; is a pair whose car and cdr values are
+    exact integers or strings or procedures; m and n, and the absolute
+    values of m and n are M and N, respectively.  First, when the car
+    element is an exact integer, the resulting string takes from the
+    left m-characters, if it is positive, or all the characters but
+    M-characters, if non-positive.  When the car element is a string,
+    the string is prefixed.  When the car element is a procedure, the
+    procedure takes a string argument and returns a string as a pipe.
+    Second, when the cdr element is an exact integer, the resulting
+    string takes from the right n-characters of the string that is
+    processed by the car element, if it is positive, or all the
+    characters but N-characters, if non-positive.  When the cdr
+    element is a string, the string is postfixed to the string that is
+    processed by the car element.  When the cdr element is a
+    procedure, the procedure takes the string processed by the car
+    element as an argument and returns a string.</li>
 
-9. The &lt;precision&gt; is a non-negative exact integer that specifies the number
-   of decimal digits after a decimal point.
+  <li>The &lt;separator&gt; is a vector whose elements are a string
+    serving as a separator, and a non-zero exact integer; n, and its
+    absolute value is N.  The resulting string is separated in every
+    N-characters of the resulting string from right end, if n is
+    positive, or from left end, if n is negative.  Even if n is a
+    negative integer, its absolute value is used for the number type
+    of &lt;object&gt;.  When the number of elements is one, the
+    &lt;separator&gt; is effective only for the number type of
+    &lt;object&gt;.  The default values of the elements are
+    &quot;,&quot; and 3 respectively.</li>
 
-10. The &lt;radix&gt; is a symbol: binary, octal, decimal, or hexadecimal.  Each
-    radix sign except decimal is prefixed to the resulting string.  The
-    default value is decimal.
+  <li>The &lt;point&gt; is a symbol: fixed or floating.  Each returns
+    a string of decimal fraction or exponential representation.</li>
 
-11. If &lt;sign&gt; is a symbol that takes the form of 'sign, and &lt;object&gt; is a
-    positive number without a positive sign, the positive sign is prefixed to
-    the resulting string.
+  <li>The &lt;precision&gt; is a non-negative exact integer that
+    specifies the number of decimal digits after a decimal point.</li>
 
-12. The &lt;exactness&gt; is a symbol: exact or inexact.  Each returns a string of
-    exact or inexact representation.
+  <li>The &lt;radix&gt; is a symbol: binary, octal, decimal, or
+    hexadecimal.  Each radix sign except decimal is prefixed to the
+    resulting string.  The default value is decimal.</li>
 
-13. The resulting string is prefixed with &lt;pre-string&gt; and postfixed with
-    &lt;post-string&gt;s.
+  <li>If &lt;sign&gt; is a symbol that takes the form of 'sign, and
+    &lt;object&gt; is a positive number without a positive sign, the
+    positive sign is prefixed to the resulting string.</li>
 
+  <li>The &lt;exactness&gt; is a symbol: exact or inexact.  Each
+    returns a string of exact or inexact representation.</li>
 
-Examples
+  <li>The resulting string is prefixed with &lt;pre-string&gt; and
+    postfixed with &lt;post-string&gt;s.</li></ol>
 
+  <h2>Examples</h2>
+<pre>
 (fox 129.995 -10 '(1))			-&gt; &quot;130.0     &quot;
 (fox 129.995 10 '(1))			-&gt; &quot;     130.0&quot;
 (fox 129.995 -10. #\* '(1))		-&gt; &quot;**130.0***&quot;
@@ -246,1018 +283,17 @@ Examples
      net:  12,222,222.112     net:   12,222,222.11
       ex&#0058;         1234-ex      ex&#0058;         1234-ex
     file:       today.txt    file:       today.txt
-
 </pre>
-<h1>Reference Implementation</h1>
-<pre>
-;;; The implementation below requires SRFI-6 (Basic string ports).
-;;; For compatibility with R6RS:
-;;; (define inexact-&gt;exact exact)
-;;; (define exact-&gt;inexact inexact)
 
-(define (object-&gt;string object writer)
-  (get-output-string
-   (let ((str-port (open-output-string)))
-     (writer object str-port)
-     str-port)))
+<h1>Sample Implementation</h1>
 
-(define (str-convert str str-pro-num)
-  (let ((left (car str-pro-num)) (right (cdr str-pro-num)))
-    (cond
-     ((string? right)
-      (cond
-       ((string? left) (string-append left str right))
-       ((procedure? left) (string-append (left str) right))
-       ((zero? left) (string-append str right))
-       (else (string-append (let ((len (string-length str)))
-			      (if (positive? left)
-				  (if (&lt; left len)
-				      (substring str 0 left)
-				      str)
-				  (if (positive? (+ len left))
-				      (substring str (abs left) len)
-				      &quot;&quot;)))
-			    right))))
-     ((procedure? right)
-      (cond
-       ((string? left) (right (string-append left str)))
-       ((procedure? left) (right (left str)))
-       ((zero? left) (right str))
-       (else (right (let ((len (string-length str)))
-		      (if (positive? left)
-			  (if (&lt; left len)
-			      (substring str 0 left)
-			      str)
-			  (if (positive? (+ len left))
-			      (substring str (abs left) len)
-			      &quot;&quot;)))))))
-     ((zero? right)
-      (cond
-       ((string? left) (string-append left str))
-       ((procedure? left) (left str))
-       ((zero? left) str)
-       (else (let ((len (string-length str)))
-	       (if (positive? left)
-		   (if (&lt; left len)
-		       (substring str 0 left)
-		       str)
-		   (if (positive? (+ len left))
-		       (substring str (abs left) len)
-		       &quot;&quot;))))))
-     (else
-      (let* ((lt-str (cond
-		      ((string? left) (string-append left str))
-		      ((procedure? left) (left str))
-		      ((zero? left) str)
-		      (else (let ((len (string-length str)))
-			      (if (positive? left)
-				  (if (&lt; left len)
-				      (substring str 0 left)
-				      str)
-				  (if (positive? (+ len left))
-				      (substring str (abs left) len)
-				      &quot;&quot;))))))
-	     (lt-len (string-length lt-str)))
-	(if (negative? right)
-	    (if (positive? (+ lt-len right))
-		(substring lt-str 0 (+ lt-len right))
-		&quot;&quot;)
-	    (if (&lt; right lt-len)
-		(substring lt-str (- lt-len right) lt-len)
-		lt-str)))))))
+<p>The sample implementation available both in the <a href="https://github.com/scheme-requests-for-implementation/srfi-183">Github repo</a> and in <a href= "https://srfi.schemers.org/srfi-183/srfi-183.tgz">this <code>.tgz</code> file</a>.</p>
 
-(define (str-char-index str char start end)
-  (let lp ((n start))
-    (if (= n end)
-	#f
-	(if (char=? char (string-ref str n))
-	    n
-	    (lp (+ n 1))))))
-
-(define (str-num-index str start end)
-  (let lp ((n start))
-    (if (= n end)
-	#f
-	(if (char-numeric? (string-ref str n))
-	    n
-	    (lp (+ n 1))))))
-
-(define (str-xnum-index str start end)
-  (let lp ((n start))
-    (if (= n end)
-	#f
-	(let ((ch (string-ref str n)))
-	  (if (or (char-numeric? ch)
-		  (memv ch '(#\a #\b #\c #\d #\e #\f
-			     #\A #\B #\C #\D #\E #\F)))
-	      n
-	      (lp (+ n 1)))))))
-
-(define (str-numeric? str start end)
-  (let lp ((n start))
-    (if (= n end)
-	#t
-	(if (char-numeric? (string-ref str n))
-	    (lp (+ n 1))
-	    #f))))
-
-(define (num-separate str sep num sig)
-  (let* ((len (string-length str))
-	 (dot-index (str-char-index str #\. 1 len)))
-    (if dot-index
-	(if sig
-	    (if (and (str-numeric? str 1 dot-index)
-		     (str-numeric? str (+ 1 dot-index) len))
-		(string-append
-		 (apply string-append
-			(let loop ((ini 0)
-				   (pos (+ 1 (let ((pos (remainder
-							 (- dot-index 1) num)))
-					       (if (zero? pos) num pos)))))
-			  (if (&lt; pos dot-index)
-			      (cons (substring str ini pos)
-				    (cons sep (loop pos (+ pos num))))
-			      (list (substring str ini dot-index)))))
-		 &quot;.&quot;
-		 (apply string-append
-			(let loop ((ini (+ 1 dot-index))
-				   (pos (+ 1 dot-index num)))
-			  (if (&lt; pos len)
-			      (cons (substring str ini pos)
-				    (cons sep (loop pos (+ pos num))))
-			      (list (substring str ini len))))))
-		str)
-	    (if (and (str-numeric? str 0 dot-index)
-		     (str-numeric? str (+ 1 dot-index) len))
-		(string-append
-		 (apply string-append
-			(let loop ((ini 0)
-				   (pos (let ((pos (remainder dot-index num)))
-					  (if (zero? pos) num pos))))
-			  (if (&lt; pos dot-index)
-			      (cons (substring str ini pos)
-				    (cons sep (loop pos (+ pos num))))
-			      (list (substring str ini dot-index)))))
-		 &quot;.&quot;
-		 (apply string-append
-			(let loop ((ini (+ 1 dot-index))
-				   (pos (+ 1 dot-index num)))
-			  (if (&lt; pos len)
-			      (cons (substring str ini pos)
-				    (cons sep (loop pos (+ pos num))))
-			      (list (substring str ini len))))))
-		str))
-	(if sig
-	    (if (str-numeric? str 1 len)
-		(apply string-append
-		       (let loop ((ini 0)
-				  (pos (+ 1 (let ((pos (remainder (- len 1)
-								  num)))
-					      (if (zero? pos) num pos)))))
-			 (if (&lt; pos len)
-			     (cons (substring str ini pos)
-				   (cons sep (loop pos (+ pos num))))
-			     (list (substring str ini len)))))
-		str)
-	    (if (str-numeric? str 0 len)
-		(apply string-append
-		       (let loop ((ini 0)
-				  (pos (let ((pos (remainder len num)))
-					 (if (zero? pos) num pos))))
-			 (if (&lt; pos len)
-			     (cons (substring str ini pos)
-				   (cons sep (loop pos (+ pos num))))
-			     (list (substring str ini len)))))
-		str)))))
-
-(define (str-separate str sep num)
-  (let ((len (string-length str))
-	(n (abs num)))
-    (apply string-append
-	   (let loop ((ini 0)
-		      (pos (if (negative? num)
-			       n
-			       (let ((pos (remainder len n)))
-				 (if (zero? pos) n pos)))))
-	     (if (&lt; pos len)
-		 (cons (substring str ini pos)
-		       (cons sep (loop pos (+ pos n))))
-		 (list (substring str ini len)))))))
-
-(define (fix-mold str pre)
-  (let* ((len (string-length str))
-	 (ind (str-char-index str #\. 0 len)))
-    (if ind
-	(let ((d-len (- len (+ ind 1))))
-	  (cond
-	   ((= d-len pre) str)
-	   ((&lt; d-len pre) (string-append str (make-string (- pre d-len) #\0)))
-	   ;;((char&lt;? #\4 (string-ref str (+ 1 ind pre)))
-	   ;;(let ((com (expt 10 pre)))
-	   ;;  (number-&gt;string (/ (round (* (string-&gt;number str) com)) com))))
-	   ((or (char&lt;? #\5 (string-ref str (+ 1 ind pre)))
-		(and (char=? #\5 (string-ref str (+ 1 ind pre)))
-		     (or (&lt; (+ 1 pre) d-len)
-			 (memv (string-ref str (+ ind (if (= 0 pre) -1 pre)))
-			       '(#\1 #\3 #\5 #\7 #\9)))))
-	    (apply
-	     string
-	     (let* ((minus (char=? #\- (string-ref str 0)))
-		    (str (substring str (if minus 1 0) (+ 1 ind pre)))
-		    (char-list
-		     (reverse
-		      ;;(let lp ((index (- (string-length str) 1))
-		      (let lp ((index (- (+ ind pre) (if minus 1 0)))
-			       (raise #t))
-			(if (= -1 index)
-			    (if raise '(#\1) '())
-			    (let ((chr (string-ref str index)))
-			      (if (char=? #\. chr)
-				  (cons chr (lp (- index 1) raise))
-				  (if raise
-				      (if (char=? #\9 chr)
-					  (cons #\0 (lp (- index 1) raise))
-					  (cons (integer-&gt;char
-						 (+ 1 (char-&gt;integer chr)))
-						(lp (- index 1) #f)))
-				      (cons chr (lp (- index 1) raise))))))))))
-	       (if minus (cons #\- char-list) char-list))))
-	   (else
-	    (substring str 0 (+ 1 ind pre)))))
-	(string-append str &quot;.&quot; (make-string pre #\0)))))
-
-(define (fix-mold-nan-infinite str pre)
-  (let* ((len (string-length str))
-	 (ind (str-char-index str #\. 1 len))
-	 (d-len (- len (+ ind 1))))
-    (if (char-numeric? (string-ref str (- ind 1)))
-	(cond
-	 ((= d-len pre) str)
-	 ((&lt; d-len pre) (string-append str (make-string (- pre d-len) #\0)))
-	 ;;((char&lt;? #\4 (string-ref str (+ 1 ind pre)))
-	 ;;(let ((com (expt 10 pre)))
-	 ;;  (number-&gt;string (/ (round (* (string-&gt;number str) com)) com))))
-	 ((or (char&lt;? #\5 (string-ref str (+ 1 ind pre)))
-	      (and (char=? #\5 (string-ref str (+ 1 ind pre)))
-		   (or (&lt; (+ 1 pre) d-len)
-		       (memv (string-ref str (+ ind (if (= 0 pre) -1 pre)))
-			     '(#\1 #\3 #\5 #\7 #\9)))))
-	  (apply
-	   string
-	   (let* ((minus (char=? #\- (string-ref str 0)))
-		  (str (substring str (if minus 1 0) (+ 1 ind pre)))
-		  (char-list
-		   (reverse
-		    ;;(let lp ((index (- (string-length str) 1))
-		    (let lp ((index (- (+ ind pre) (if minus 1 0)))
-			     (raise #t))
-		      (if (= -1 index)
-			  (if raise '(#\1) '())
-			  (let ((chr (string-ref str index)))
-			    (if (char=? #\. chr)
-				(cons chr (lp (- index 1) raise))
-				(if raise
-				    (if (char=? #\9 chr)
-					(cons #\0 (lp (- index 1) raise))
-					(cons (integer-&gt;char
-					       (+ 1 (char-&gt;integer chr)))
-					      (lp (- index 1) #f)))
-				    (cons chr (lp (- index 1) raise))))))))))
-	     (if minus (cons #\- char-list) char-list))))
-	 (else
-	  (substring str 0 (+ 1 ind pre))))
-	(error &quot;fox: infinities or nans cannot have precisions&quot; str pre))))
-
-(define (num-mold str pre)
-  (let* ((len (string-length str))
-	 (e-index (str-char-index str #\e 1 (- len 1))))
-    (if e-index
-	(string-append (fix-mold (substring str 0 e-index) pre)
-		       (substring str e-index len))
-	(fix-mold-nan-infinite str pre))))
-
-(define (exp-mold str pre)
-  (let* ((len (string-length str))
-	 (e-index (str-char-index str #\e 1 (- len 1))))
-    (string-append (fix-mold (substring str 0 e-index) pre)
-		   (substring str e-index len))))
-
-;; (define (remove-zero str len negative)
-;;   (if negative
-;;       (let lp ((n 1))
-;; 	(let ((c (string-ref str n)))
-;; 	  (cond
-;; 	   ((char=? #\0 c) (lp (+ 1 n)))
-;; 	   ((char=? #\. c)
-;; 	    (if (= n 2)
-;; 		str
-;; 		(string-append &quot;-&quot; (substring str (- n 1) len))))
-;; 	   (else
-;; 	    (if (= n 1)
-;; 		str
-;; 		(string-append &quot;-&quot; (substring str n len)))))))
-;;       (let lp ((n 0))
-;; 	(let ((c (string-ref str n)))
-;; 	  (cond
-;; 	   ((char=? #\0 c) (lp (+ 1 n)))
-;; 	   ((char=? #\. c)
-;; 	    (if (= n 1)
-;; 		str
-;; 		(substring str (- n 1) len)))
-;; 	   (else
-;; 	    (if (zero? n)
-;; 		str
-;; 		(substring str n len))))))))
-
-(define (make-fix n)
-  (let* ((str (number-&gt;string (exact-&gt;inexact n)))
-	 (len (string-length str))
-	 (e-index (str-char-index str #\e 1 (- len 1))))
-    (if e-index
-	(let ((e-number (string-&gt;number (substring str (+ 1 e-index) len)))
-	      (d-index (str-char-index str #\. 1 e-index)))
-	  (if (negative? e-number)
-	      (if d-index
-		  (if (negative? n)
-		      (let ((p-number (- (abs e-number) (- d-index 1))))
-			(if (negative? p-number)
-			    (let ((pnumber (+ 1 (abs p-number))))
-			      (string-append (substring str 0 pnumber)
-					     &quot;.&quot;
-					     (substring str pnumber d-index)
-					     (substring str (+ 1 d-index)
-							e-index)))
-			    (string-append &quot;-0.&quot;
-					   (make-string p-number #\0)
-					   (substring str 1 d-index)
-					   (substring str (+ 1 d-index)
-						      e-index))))
-		      (let ((p-number (- (abs e-number) d-index)))
-			(if (negative? p-number)
-			    (let ((pnumber (abs p-number)))
-			      (string-append (substring str 0 pnumber)
-					     &quot;.&quot;
-					     (substring str pnumber d-index)
-					     (substring str (+ 1 d-index)
-							e-index)))
-			    (string-append &quot;0.&quot;
-					   (make-string p-number #\0)
-					   (substring str 0 d-index)
-					   (substring str (+ 1 d-index)
-						      e-index)))))
-		  (if (negative? n)
-		      (let ((p-number (- (abs e-number) (- e-index 1))))
-			(if (negative? p-number)
-			    (let ((pnumber (+ 1 (abs p-number))))
-			      (string-append (substring str 0 pnumber)
-					     &quot;.&quot;
-					     (substring str pnumber e-index)))
-			    (string-append &quot;-0.&quot;
-					   (make-string p-number #\0)
-					   (substring str 1 e-index))))
-		      (let ((p-number (- (abs e-number) e-index)))
-			(if (negative? p-number)
-			    (let ((pnumber (abs p-number)))
-			      (string-append (substring str 0 pnumber)
-					     &quot;.&quot;
-					     (substring str pnumber e-index)))
-			    (string-append &quot;0.&quot;
-					   (make-string p-number #\0)
-					   (substring str 0 e-index))))))
-	      (if d-index
-		  (let ((p-number (- e-number (- e-index (+ d-index 1)))))
-		    (if (negative? p-number)
-			;; A procedure REMOVE-ZERO is unnecessary
-			;; due to number-&gt;string.
-			;; 0.00123 -&gt; 00.0123 or 000123
-			;; -0.00123 -&gt; -00.0123 or -000123
-			;;(remove-zero (string-append
-			;;	      (substring str 0 d-index)
-			;;	      (substring str (+ 1 d-index)
-			;;			 (+ 1 d-index e-number))
-			;;	      &quot;.&quot;
-			;;	      (substring str (+ 1 d-index e-number)
-			;;			 e-index))
-			;;	     e-index
-			;;	     (&lt; n 0))
-			(string-append (substring str 0 d-index)
-				       (substring str (+ 1 d-index)
-						  (+ 1 d-index e-number))
-				       &quot;.&quot;
-				       (substring str (+ 1 d-index e-number)
-						  e-index))
-			;; A procedure REMOVE-ZERO is unnecessary
-			;; due to number-&gt;string.
-			;; 0.00123 -&gt; 00.0123 or 000123
-			;; -0.00123 -&gt; -00.0123 or -000123
-			;;(remove-zero (string-append
-			;;	      (substring str 0 d-index)
-			;;	      (substring str (+ 1 d-index) e-index)
-			;;	      (make-string p-number #\0)
-			;;	      &quot;.0&quot;)
-			;;	     (+ e-index p-number 1)
-			;;	     (&lt; n 0))))
-			(string-append (substring str 0 d-index)
-				       (substring str (+ 1 d-index) e-index)
-				       (make-string p-number #\0) &quot;.0&quot;)))
-		  (string-append (substring str 0 e-index)
-				 (make-string e-number #\0)
-				 &quot;.0&quot;))))
-	(let ((d-index (str-char-index str #\. 1 len)))
-	  (if (char-numeric? (string-ref str (- d-index 1)))
-	      str
-	      (error &quot;fox: infinities or nans cannot be changed into fixed-format floating-point numbers&quot; n))))))
-
-(define (non-0-index str start)
-  (let lp ((n start))
-    (if (char=? #\0 (string-ref str n))
-	(lp (+ 1 n))
-	 n)))
-
-(define (non-0-index-right str end)
-  (let lp ((n (- end 1)))
-    (if (char=? #\0 (string-ref str n))
-	(lp (- n 1))
-	n)))
-
-;; (define (non-0-dot-index-right str end)
-;;   (let lp ((n (- end 1)))
-;;     (let ((c (string-ref str n)))
-;;       (if (or (char=? #\0 c) (char=? #\. c))
-;; 	  (lp (- n 1))
-;; 	  n))))
-
-(define (make-exp n)
-  (let* ((str (number-&gt;string (exact-&gt;inexact n)))
-	 (len (string-length str))
-	 (e-index (str-char-index str #\e 1 (- len 1))))
-    (if e-index
-	str
-	(let ((d-index (str-char-index str #\. 1 len)))
-	  (if (&lt; -1 n 1)
-	      (if (zero? n)
-		  (string-append str &quot;e+0&quot;) ;for -0.0 or +0.0
-		  (let ((n-index (non-0-index str (+ 1 d-index))))
-		    (string-append (if (negative? n) &quot;-&quot; &quot;&quot;)
-				   (substring str n-index (+ 1 n-index))
-				   &quot;.&quot;
-				   (if (= n-index (- len 1))
-				       &quot;0&quot;
-				       (substring str (+ 1 n-index) len))
-				   &quot;e-&quot;
-				   (number-&gt;string (- n-index d-index)))))
-	      ;;(let ((n-index (non-0-dot-index-right str len)))
-	      ;;  (if (&lt; n-index d-index)
-	      (let ((n-index (non-0-index-right str len)))
-		(if (= n-index d-index)
-		    (let ((n-index (non-0-index-right str d-index)))
-		      (if (char-numeric? (string-ref str n-index))
-			  (if (negative? n)
-			      (string-append (substring str 0 2)
-					     &quot;.&quot;
-					     (if (= n-index 1)
-						 &quot;0&quot;
-						 (substring str 2
-							    (+ 1 n-index)))
-					     &quot;e+&quot;
-					     (number-&gt;string (- d-index 2)))
-			      (string-append (substring str 0 1)
-					     &quot;.&quot;
-					     (if (= n-index 0)
-						 &quot;0&quot;
-						 (substring str 1
-							    (+ 1 n-index)))
-					     &quot;e+&quot;
-					     (number-&gt;string (- d-index 1))))
-			  (error &quot;fox: infinities or nans cannot be changed into floating-point numbers&quot; n)))
-		    (if (negative? n)
-			(string-append (substring str 0 2)
-				       &quot;.&quot;
-				       (substring str 2 d-index)
-				       (substring str (+ 1 d-index)
-						  (+ 1 n-index))
-				       &quot;e+&quot;
-				       (number-&gt;string (- d-index 2)))
-			(string-append (substring str 0 1)
-				       &quot;.&quot;
-				       (substring str 1 d-index)
-				       (substring str (+ 1 d-index)
-						  (+ 1 n-index))
-				       &quot;e+&quot;
-				       (number-&gt;string (- d-index 1)))))))))))
-
-;; (define (integer/string/procedure? is)
-;;   (or (integer? is) (string? is) (procedure? is)))
-
-(define (fetus object rest)
-  (alet* ((opt rest
-	       ;; (,port #f (or (boolean? port) (output-port? port))) ;boolean, port
-	       (,width 0 (integer? width))			   ;integer
-	       (,char #\space (char? char))			   ;char
-	       (,list-for-number #f (list? list-for-number))	   ;list
-	       (,writer display (procedure? writer))		   ;procedure
-	       (,converter #f (pair? converter))		   ;pair
-	       (,separator #f (vector? separator))))		   ;vector
-    (if (number? object)
-	(if (and list-for-number (or (eq? writer display) (eq? writer write)))
-	    (alet* ((opt list-for-number
-			 (,precision #f (and (integer? precision) (not (negative? precision))))
-			 (,point #f (memq point '(fixed floating)))
-			 (,radix 'decimal (memq radix '(decimal octal binary hexadecimal)))
-			 (,sign #f (eq? 'sign sign))
-			 (,exactness #f (memq exactness '(exact inexact))))
-		    (inexact-sign
-		     (and (not (eq? radix 'decimal))
-			   (or (and (or precision point)
-				    (error &quot;fox: non-decimal cannot have a decimal point&quot; radix precision))
-			       (and (inexact? object) (not (eq? exactness 'exact)))
-			       (eq? exactness 'inexact))
-			   &quot;#i&quot;))
-		    (str
-		     (cond
-		      (point
-		       (if (eq? point 'fixed)
-			   ;; fixed-point
-			   (if precision
-			       (if (real? object)
-				   (fix-mold (make-fix object) precision)
-				   (let ((imag-str (make-fix (imag-part object))))
-				     (string-append
-				      (fix-mold (make-fix (real-part object))
-						precision)
-				      ;; for N+0.0i
-				      ;; (if (char-numeric? (string-ref imag-str 0))
-				      ;;     &quot;+&quot; &quot;&quot;)
-				      (if (char=? #\- (string-ref imag-str 0))
-					  &quot;&quot; &quot;+&quot;)
-				      (fix-mold imag-str precision)
-				      &quot;i&quot;)))
-			       (if (real? object)
-				   (make-fix object)
-				   (let ((imag-str (make-fix (imag-part object))))
-				     (string-append
-				      (make-fix (real-part object))
-				      ;; for N+0.0i
-				      ;; (if (char-numeric? (string-ref imag-str 0))
-				      ;;     &quot;+&quot; &quot;&quot;)
-				      (if (char=? #\- (string-ref imag-str 0))
-					  &quot;&quot; &quot;+&quot;)
-				      imag-str
-				      &quot;i&quot;))))
-			   ;; floating-point
-			   (if precision
-			       (if (real? object)
-				   (exp-mold (make-exp object) precision)
-				   (let ((imag-str (make-exp (imag-part object))))
-				     (string-append
-				      (exp-mold (make-exp (real-part object))
-						precision)
-				      ;; for N+0.0i
-				      ;; (if (char-numeric? (string-ref imag-str 0))
-				      ;;     &quot;+&quot; &quot;&quot;)
-				      (if (char=? #\- (string-ref imag-str 0))
-					  &quot;&quot; &quot;+&quot;)
-				      (exp-mold imag-str precision)
-				      &quot;i&quot;)))
-			       (if (real? object)
-				   (make-exp object)
-				   (let ((imag-str (make-exp (imag-part object))))
-				     (string-append
-				      (make-exp (real-part object))
-				      ;; for N+0.0i
-				      ;; (if (char-numeric? (string-ref imag-str 0))
-				      ;;     &quot;+&quot; &quot;&quot;)
-				      (if (char=? #\- (string-ref imag-str 0))
-					  &quot;&quot; &quot;+&quot;)
-				      imag-str
-				      &quot;i&quot;))))))
-		      (precision
-		       (if (real? object)
-			   (num-mold (number-&gt;string (exact-&gt;inexact object))
-				     precision)
-			   (let ((imag-str (number-&gt;string
-					    (exact-&gt;inexact (imag-part object)))))
-			     (string-append
-			      (num-mold (number-&gt;string
-					 (exact-&gt;inexact (real-part object)))
-					precision)
-			      ;; for N+0.0i
-			      ;; (if (char-numeric? (string-ref imag-str 0))
-			      ;;     &quot;+&quot; &quot;&quot;)
-			      (if (char=? #\- (string-ref imag-str 0))
-				  &quot;&quot; &quot;+&quot;)
-			      (num-mold imag-str precision)
-			      &quot;i&quot;))))
-		      (else
-		       (number-&gt;string
-			(cond
-			 (inexact-sign (inexact-&gt;exact object))
-			 (exactness (if (eq? exactness 'exact)
-					(inexact-&gt;exact object)
-					(exact-&gt;inexact object)))
-			 (else object))
-			(cdr (assq radix '((decimal . 10)
-					   (octal . 8)
-					   (hexadecimal . 16)
-					   (binary . 2))))))))
-		    (str (if (and separator (eq? radix 'decimal))
-			     (if (string? (vector-ref separator 0))
-				 (num-separate str
-					       (vector-ref separator 0)
-					       (if (= 1 (vector-length separator))
-						   3
-						   (abs (vector-ref separator 1)))
-					       (negative? (real-part object)))
-				 (num-separate str
-					       (if (= 1 (vector-length separator))
-						   &quot;,&quot;
-						   (vector-ref separator 1))
-					       (abs (vector-ref separator 0))
-					       (negative? (real-part object))))
-			     str))
-		    (str (string-append
-			  (or inexact-sign &quot;&quot;)
-			  (if (and (eq? exactness 'exact) (or precision point))
-			      &quot;#e&quot; &quot;&quot;)
-			  (cdr (assq radix '((decimal . &quot;&quot;)
-					     (octal . &quot;#o&quot;)
-					     (hexadecimal . &quot;#x&quot;)
-					     (binary . &quot;#b&quot;))))
-			  (if (and sign
-				   ;;(positive? (real-part object)))
-				   ;; for 0.0
-				   (let ((ch (string-ref str 0)))
-				     (not (or (char=? #\- ch)
-					      (char=? #\+ ch))))) ;for +inf.0
-			      &quot;+&quot; &quot;&quot;)
-			  str))
-		    (str (if converter (str-convert str converter) str))
-		    (pad (- (abs (if (exact? width) width (inexact-&gt;exact width)))
-			    (string-length str))))
-		;; The following use infinite? and nan? predicates.
-		;; (cond
-		;;  ((&lt;= pad 0) str)
-		;;  ((inexact? width)
-		;;   (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-		;; 	     (tail (- pad head)))
-		;; 	(if (eq? radix 'hexadecimal)
-		;; 	    (if (or (char-numeric? char)
-		;; 		    (memv char '(#\a #\b #\c #\d #\e #\f
-		;; 				 #\A #\B #\C #\D #\E #\F)))
-		;; 		(let* ((len (string-length str))
-		;; 		       (index (str-xnum-index str 0 len)))
-		;; 		  (if index
-		;; 		      (string-append (substring str 0 index)
-		;; 				     (make-string head char)
-		;; 				     (substring str index len)
-		;; 				     (make-string tail char))
-		;; 		      (string-append (make-string head char)
-		;; 				     str
-		;; 				     (make-string tail char))))
-		;; 		(string-append (make-string head char)
-		;; 			       str
-		;; 			       (make-string tail char)))
-		;; 	    (if (char-numeric? char)
-		;; 		(if (or (infinite? object) (nan? object))
-		;; 		    (string-append (make-string pad char) str)
-		;; 		    (let* ((len (string-length str))
-		;; 			   (index (str-num-index str 0 len)))
-		;; 		      (if index
-		;; 			  (string-append (substring str 0 index)
-		;; 					 (make-string head char)
-		;; 					 (substring str index len)
-		;; 					 (make-string tail char))
-		;; 			  (string-append (make-string head char)
-		;; 					 str
-		;; 					 (make-string tail char)))))
-		;; 		(string-append (make-string head char)
-		;; 			       str
-		;; 			       (make-string tail char))))))
-		;;  ((positive? width)
-		;;   (if (eq? radix 'hexadecimal)
-		;; 	  (if (or (char-numeric? char)
-		;; 		  (memv char '(#\a #\b #\c #\d #\e #\f
-		;; 			       #\A #\B #\C #\D #\E #\F)))
-		;; 	      (let* ((len (string-length str))
-		;; 		     (index (str-xnum-index str 0 len)))
-		;; 		(if index
-		;; 		    (string-append (substring str 0 index)
-		;; 				   (make-string pad char)
-		;; 				   (substring str index len))
-		;; 		    (string-append (make-string pad char) str)))
-		;; 	      (string-append (make-string pad char) str))
-		;; 	  (if (char-numeric? char)
-		;; 	      (if (or (infinite? object) (nan? object))
-		;; 		  (string-append (make-string pad char) str)
-		;; 		  (let* ((len (string-length str))
-		;; 			 (index (str-num-index str 0 len)))
-		;; 		    (if index
-		;; 			(string-append (substring str 0 index)
-		;; 				       (make-string pad char)
-		;; 				       (substring str index len))
-		;; 			(string-append (make-string pad char) str))))
-		;; 	      (string-append (make-string pad char) str))))
-		;;  (else (string-append str (make-string pad char))))))
-	      (cond
-	       ((&lt;= pad 0) str)
-	       ((inexact? width)
-		(let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-		       (tail (- pad head)))
-		  (if (eq? radix 'hexadecimal)
-		      (if (or (char-numeric? char)
-			      (memv char '(#\a #\b #\c #\d #\e #\f
-					   #\A #\B #\C #\D #\E #\F)))
-			  (let* ((len (string-length str))
-				 (index (str-xnum-index str 0 len)))
-			    (if index
-				(string-append (substring str 0 index)
-					       (make-string head char)
-					       (substring str index len)
-					       (make-string tail char))
-				(string-append (make-string head char)
-					       str
-					       (make-string tail char))))
-			  (string-append (make-string head char)
-					 str
-					 (make-string tail char)))
-		      (if (char-numeric? char)
-			  (let* ((len (string-length str))
-				 (index (str-num-index str 0 len)))
-			    (if index
-				(if (or (zero? index)
-					;; for infinities and nans
-					(char=? (string-ref str (- index 1)) #\.))
-				    (string-append (make-string head char)
-						   str
-						   (make-string tail char))
-				    (string-append (substring str 0 index)
-						   (make-string head char)
-						   (substring str index len)
-						   (make-string tail char)))
-				(string-append (make-string head char)
-					       str
-					       (make-string tail char))))
-			  (string-append (make-string head char)
-					 str
-					 (make-string tail char))))))
-	       ((positive? width)
-		(if (eq? radix 'hexadecimal)
-		    (if (or (char-numeric? char)
-			    (memv char '(#\a #\b #\c #\d #\e #\f
-					 #\A #\B #\C #\D #\E #\F)))
-			(let* ((len (string-length str))
-			       (index (str-xnum-index str 0 len)))
-			  (if index
-			      (string-append (substring str 0 index)
-					     (make-string pad char)
-					     (substring str index len))
-			      (string-append (make-string pad char) str)))
-			(string-append (make-string pad char) str))
-		    (if (char-numeric? char)
-			(let* ((len (string-length str))
-			       (index (str-num-index str 0 len)))
-			  (if index
-			      (if (or (zero? index)
-				      ;; for infinities and nans
-				      (char=? (string-ref str (- index 1)) #\.))
-				  (string-append (make-string pad char) str)
-				  (string-append (substring str 0 index)
-						 (make-string pad char)
-						 (substring str index len)))
-			      (string-append (make-string pad char) str)))
-			(string-append (make-string pad char) str))))
-	       (else (string-append str (make-string pad char)))))
-	    (let* ((str (if (or (eq? writer display) (eq? writer write))
-			    (number-&gt;string object)
-			    (object-&gt;string object writer)))
-		   (str (if separator
-			    (if (string? (vector-ref separator 0))
-				(num-separate str
-					      (vector-ref separator 0)
-					      (if (= 1 (vector-length separator))
-						  3
-						  (abs (vector-ref separator 1)))
-					      (negative? (real-part object)))
-				(num-separate str
-					      (if (= 1 (vector-length separator))
-						  &quot;,&quot;
-						  (vector-ref separator 1))
-					      (abs (vector-ref separator 0))
-					      (negative? (real-part object))))
-			    str))
-		   (str (if converter (str-convert str converter) str))
-		   (pad (- (abs (if (exact? width) width (inexact-&gt;exact width)))
-			   (string-length str))))
-	      ;; The following use infinite? and nan? predicates.
-	      ;; (cond
-	      ;;  ((&lt;= pad 0) str)
-	      ;;  ((inexact? width)
-	      ;; 	(let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-	      ;; 	       (tail (- pad head)))
-	      ;; 	  (if (char-numeric? char)
-	      ;; 	      (if (or (infinite? object) (nan? object))
-	      ;; 		  (string-append (make-string pad char) str)
-	      ;; 		  (let* ((len (string-length str))
-	      ;; 			 (index (str-num-index str 0 len)))
-	      ;; 		    (if index
-	      ;; 			(string-append (substring str 0 index)
-	      ;; 				       (make-string head char)
-	      ;; 				       (substring str index len)
-	      ;; 				       (make-string tail char))
-	      ;; 			(string-append (make-string head char)
-	      ;; 				       str
-	      ;; 				       (make-string tail char)))))
-	      ;; 	      (string-append (make-string head char)
-	      ;; 			     str
-	      ;; 			     (make-string tail char)))))
-	      ;;  ((positive? width)
-	      ;; 	(if (char-numeric? char)
-	      ;; 	    (if (or (infinite? object) (nan? object))
-	      ;; 		(string-append (make-string pad char) str)
-	      ;; 		(let* ((len (string-length str))
-	      ;; 		       (index (str-num-index str 0 len)))
-	      ;; 		  (if index
-	      ;; 		      (string-append (substring str 0 index)
-	      ;; 				     (make-string pad char)
-	      ;; 				     (substring str index len))
-	      ;; 		      (string-append (make-string pad char) str))))
-	      ;; 	    (string-append (make-string pad char) str)))
-	      ;;  (else (string-append str (make-string pad char))))))
-	      (cond
-	       ((&lt;= pad 0) str)
-	       ((inexact? width)
-		(let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-		       (tail (- pad head)))
-		  (if (char-numeric? char)
-		      (let* ((len (string-length str))
-			     (index (str-num-index str 0 len)))
-			(if index
-			    (if (or (zero? index)
-				    ;; for infinities and nans
-				    (char=? (string-ref str (- index 1)) #\.))
-				(string-append (make-string head char)
-					       str
-					       (make-string tail char))
-				(string-append (substring str 0 index)
-					       (make-string head char)
-					       (substring str index len)
-					       (make-string tail char)))
-			    (string-append (make-string head char)
-					   str
-					   (make-string tail char))))
-		      (string-append (make-string head char)
-				     str
-				     (make-string tail char)))))
-	       ((positive? width)
-		(if (char-numeric? char)
-		    (let* ((len (string-length str))
-			   (index (str-num-index str 0 len)))
-		      (if index
-			  (if (or (zero? index)
-				  ;; for infinities and nans
-				  (char=? (string-ref str (- index 1)) #\.))
-			      (string-append (make-string pad char) str)
-			      (string-append (substring str 0 index)
-					     (make-string pad char)
-					     (substring str index len)))
-			  (string-append (make-string pad char) str)))
-		    (string-append (make-string pad char) str)))
-	       (else (string-append str (make-string pad char))))))
-	(let* ((str (if (eq? writer display)
-			(cond
-			 ((string? object) object)
-			 ((symbol? object) (symbol-&gt;string object))
-			 ((char? object) (string object))
-			 ((boolean? object) (if object &quot;#t&quot; &quot;#f&quot;))
-			 (else (object-&gt;string object writer)))
-			(if (eq? writer write)
-			    (cond
-			     ((symbol? object) (symbol-&gt;string object))
-			     ((char? object) (string-append &quot;#\\&quot; (string object)))
-			     ((boolean? object) (if object &quot;#t&quot; &quot;#f&quot;))
-			     (else (object-&gt;string object writer)))
-			    (object-&gt;string object writer))))
-	       (str (if (and separator (= 2 (vector-length separator)))
-			(if (string? (vector-ref separator 0))
-			    (str-separate str
-					  (vector-ref separator 0)
-					  (vector-ref separator 1))
-			    (str-separate str
-					  (vector-ref separator 1)
-					  (vector-ref separator 0)))
-			str))
-	       (str (if converter (str-convert str converter) str))
-	       (pad (- (abs (if (exact? width) width (inexact-&gt;exact width)))
-		       (string-length str))))
-	  (cond
-	   ((&lt;= pad 0) str)
-	   ((inexact? width)
-	    (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-		   (tail (- pad head)))
-	      (string-append (make-string head char) str (make-string tail char))))
-	   ((positive? width)
-	    (string-append (make-string pad char) str))
-	   (else (string-append str (make-string pad char))))))))
-
-(define (cub object . rest)
-  (if (null? rest)
-      (cond
-       ((number? object) (number-&gt;string object))
-       ((string? object) object)
-       ((symbol? object) (symbol-&gt;string object))
-       ((char? object) (string object))
-       ((boolean? object) (if object &quot;#t&quot; &quot;#f&quot;))
-       (else (object-&gt;string object display)))
-      (fetus object rest)))
-
-(define (fox object . rest)
-  (if (null? rest)
-      (cond
-       ((number? object) (number-&gt;string object))
-       ((string? object) object)
-       ((symbol? object) (symbol-&gt;string object))
-       ((char? object) (string object))
-       ((boolean? object) (if object &quot;#t&quot; &quot;#f&quot;))
-       (else (object-&gt;string object display)))
-      ;; partition: pre-string, optional arguments, post-strings
-      (let* ((pre-str #f)
-	     (strs (let ((first (car rest)))
-		     (if (string? first)
-			 (if (or (null? (cdr rest)) (string? (cadr rest)))
-			     (let ((tmp rest)) (set! rest '()) tmp)
-			     (let lp ((head (list (cadr rest)))
-				      (tail (cddr rest)))
-			       (if (null? tail)
-				   (begin (set! pre-str first)
-					  (set! rest (cdr rest))
-					  #f)
-				   (let ((arg (car tail)))
-				     (if (string? arg)
-					 (begin (set! pre-str first)
-						(set! rest (reverse head))
-						tail)
-					 (lp (cons arg head)
-					     (cdr tail)))))))
-			 (let lp ((head (list first))
-				  (tail (cdr rest)))
-			   (if (null? tail)
-			       #f
-			       (let ((arg (car tail)))
-				 (if (string? arg)
-				     (begin (set! rest (reverse head))
-					    tail)
-				     (lp (cons arg head)
-					 (cdr tail))))))))))
-	(if (null? rest)
-	    (apply string-append
-		   (cond
-		    ((number? object) (number-&gt;string object))
-		    ((string? object) object)
-		    ((symbol? object) (symbol-&gt;string object))
-		    ((char? object) (string object))
-		    ((boolean? object) (if object &quot;#t&quot; &quot;#f&quot;))
-		    (else (object-&gt;string object display)))
-		   strs)
-	    (alet* ((opt rest (,port #f (or (boolean? port) (output-port? port))) . r)
-		    (str (fetus object r)))
-	      (if port
-		  ;; All of the different implementations have the different
-		  ;; performance efficiency of `display' and `string-append'.
-		  ;; 1. (display (apply string-append pre-str str strs) port)
-		  ;; 2. (begin
-		  ;;      (display pre-str port)
-		  ;;      (display str port)
-		  ;;      (for-each (lambda (x) (display x port)) strs))
-		  (let ((port (if (eq? port #t) (current-output-port) port)))
-		    (if strs
-			(if pre-str
-			    (display (apply string-append pre-str str strs) port)
-			    (display (apply string-append str strs) port))
-			(if pre-str
-			    (display (string-append pre-str str) port)
-			    (display str port))))
-		  (if strs
-		      (if pre-str
-			  (apply string-append pre-str str strs)
-			  (apply string-append str strs))
-		      (if pre-str
-			  (string-append pre-str str)
-			  str))))))))
-
-;;; eof
-
-</pre>
 <h1>References</h1>
-<pre>
-[R5RS]	    Richard Kelsey, William Clinger, and Jonathan Rees: Revised(5)
-	    Report on the Algorithmic Language Scheme
-	    <a href="http://www.schemers.org/Documents/Standards/R5Rs/">http://www.schemers.org/Documents/Standards/R5Rs/</a>
-[R6RS]	    Michael Sperber, R. Kent Dybvig, Matthew Flatt, and
-	    Anton von Straaten:
-	    Revised(6) Report on the Algorithmic Language Scheme
-	    <a href="http://www.r6rs.org">http://www.r6rs.org</a>
-[SRFI 54]   Joo ChurlSoo: Formatting.
-	    <a href="http://srfi.schemers.org/srfi-54/">http://srfi.schemers.org/srfi-54/</a>
+<table class="references">
+  <tr><td>[R5RS]</td><td>Richard Kelsey, William Clinger, and Jonathan Rees: Revised(5) Report on the Algorithmic Language Scheme. <a class="eponymous" href="http://www.schemers.org/Documents/Standards/R5Rs/">http://www.schemers.org/Documents/Standards/R5Rs/</a></td></tr>
+<tr><td>[R6RS]</td><td>Michael Sperber, R. Kent Dybvig, Matthew Flatt, and Anton von Straaten: Revised(6) Report on the Algorithmic Language Scheme. <a class="eponymous" href="http://www.r6rs.org">http://www.r6rs.org</a></td></tr>
+<tr><td>[SRFI 54]</td><td>Joo ChurlSoo: Formatting. <a class="eponymous" href="http://srfi.schemers.org/srfi-54/">http://srfi.schemers.org/srfi-54/</a></td></tr></table>
 
 </pre>
 <h1>Copyright</h1>
