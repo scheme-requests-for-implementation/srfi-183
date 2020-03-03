@@ -292,30 +292,30 @@
 
 ;; (define (remove-zero str len negative)
 ;;   (if negative
-;;       (let lp ((n 1))
-;; 	(let ((c (string-ref str n)))
-;; 	  (cond
-;; 	   ((char=? #\0 c) (lp (+ 1 n)))
-;; 	   ((char=? #\. c)
-;; 	    (if (= n 2)
-;; 		str
-;; 		(string-append "-" (substring str (- n 1) len))))
-;; 	   (else
-;; 	    (if (= n 1)
-;; 		str
-;; 		(string-append "-" (substring str n len)))))))
-;;       (let lp ((n 0))
-;; 	(let ((c (string-ref str n)))
-;; 	  (cond
-;; 	   ((char=? #\0 c) (lp (+ 1 n)))
-;; 	   ((char=? #\. c)
-;; 	    (if (= n 1)
-;; 		str
-;; 		(substring str (- n 1) len)))
-;; 	   (else
-;; 	    (if (zero? n)
-;; 		str
-;; 		(substring str n len))))))))
+;;	 (let lp ((n 1))
+;;	(let ((c (string-ref str n)))
+;;	  (cond
+;;	   ((char=? #\0 c) (lp (+ 1 n)))
+;;	   ((char=? #\. c)
+;;	    (if (= n 2)
+;;		str
+;;		(string-append "-" (substring str (- n 1) len))))
+;;	   (else
+;;	    (if (= n 1)
+;;		str
+;;		(string-append "-" (substring str n len)))))))
+;;	 (let lp ((n 0))
+;;	(let ((c (string-ref str n)))
+;;	  (cond
+;;	   ((char=? #\0 c) (lp (+ 1 n)))
+;;	   ((char=? #\. c)
+;;	    (if (= n 1)
+;;		str
+;;		(substring str (- n 1) len)))
+;;	   (else
+;;	    (if (zero? n)
+;;		str
+;;		(substring str n len))))))))
 
 (define (make-fix n)
   (let* ((str (number->string (exact->inexact n)))
@@ -431,9 +431,9 @@
 ;; (define (non-0-dot-index-right str end)
 ;;   (let lp ((n (- end 1)))
 ;;     (let ((c (string-ref str n)))
-;;       (if (or (char=? #\0 c) (char=? #\. c))
-;; 	  (lp (- n 1))
-;; 	  n))))
+;;	 (if (or (char=? #\0 c) (char=? #\. c))
+;;	  (lp (- n 1))
+;;	  n))))
 
 (define (make-exp n)
   (let* ((str (number->string (exact->inexact n)))
@@ -529,29 +529,29 @@
 ;; (define-syntax let-fox*
 ;;   (syntax-rules ()
 ;;     ((let-fox* z ((n d t)) bd ...)
-;;      (let ((n (if (null? z)
-;; 		  d
-;; 		  (if (null? (cdr z))
-;; 		      (let ((n (car z)))
-;; 			(if t n (error 'fox "too many argument" z)))
-;; 		      (error 'fox "too many arguments" z)))))
-;;        bd ...))
+;;	(let ((n (if (null? z)
+;;		  d
+;;		  (if (null? (cdr z))
+;;		      (let ((n (car z)))
+;;			(if t n (error 'fox "too many argument" z)))
+;;		      (error 'fox "too many arguments" z)))))
+;;	  bd ...))
 ;;     ((let-fox* z ((n d t) ndt ...) bd ...)
-;;      (let ((n (if (null? z)
-;; 		  d
-;; 		  (let ((n (car z)))
-;; 		    (if t
-;; 			(begin (set! z (cdr z)) n)
-;; 			(let lp ((head (list n)) (tail (cdr z)))
-;; 			  (if (null? tail)
-;; 			      d
-;; 			      (let ((n (car tail)))
-;; 				(if t
-;; 				    (begin (set! z (append (reverse head)
-;; 							   (cdr tail)))
-;; 					   n)
-;; 				    (lp (cons n head) (cdr tail)))))))))))
-;;        (let-fox* z (ndt ...) bd ...)))))
+;;	(let ((n (if (null? z)
+;;		  d
+;;		  (let ((n (car z)))
+;;		    (if t
+;;			(begin (set! z (cdr z)) n)
+;;			(let lp ((head (list n)) (tail (cdr z)))
+;;			  (if (null? tail)
+;;			      d
+;;			      (let ((n (car tail)))
+;;				(if t
+;;				    (begin (set! z (append (reverse head)
+;;							   (cdr tail)))
+;;					   n)
+;;				    (lp (cons n head) (cdr tail)))))))))))
+;;	  (let-fox* z (ndt ...) bd ...)))))
 
 ;; (define (integer/string/procedure? is)
 ;;   (or (integer? is) (string? is) (procedure? is)))
@@ -642,7 +642,7 @@
 					     precision)
 				   ;; for N+0.0i
 				   ;; (if (char-numeric? (string-ref imag-str 0))
-				   ;;     "+" "")
+				   ;;	  "+" "")
 				   (if (char=? #\- (string-ref imag-str 0))
 				       "" "+")
 				   (fix-mold imag-str precision)
@@ -654,7 +654,7 @@
 				   (make-fix (real-part object))
 				   ;; for N+0.0i
 				   ;; (if (char-numeric? (string-ref imag-str 0))
-				   ;;     "+" "")
+				   ;;	  "+" "")
 				   (if (char=? #\- (string-ref imag-str 0))
 				       "" "+")
 				   imag-str
@@ -669,7 +669,7 @@
 					     precision)
 				   ;; for N+0.0i
 				   ;; (if (char-numeric? (string-ref imag-str 0))
-				   ;;     "+" "")
+				   ;;	  "+" "")
 				   (if (char=? #\- (string-ref imag-str 0))
 				       "" "+")
 				   (exp-mold imag-str precision)
@@ -681,7 +681,7 @@
 				   (make-exp (real-part object))
 				   ;; for N+0.0i
 				   ;; (if (char-numeric? (string-ref imag-str 0))
-				   ;;     "+" "")
+				   ;;	  "+" "")
 				   (if (char=? #\- (string-ref imag-str 0))
 				       "" "+")
 				   imag-str
@@ -698,7 +698,7 @@
 				     precision)
 			   ;; for N+0.0i
 			   ;; (if (char-numeric? (string-ref imag-str 0))
-			   ;;     "+" "")
+			   ;;	  "+" "")
 			   (if (char=? #\- (string-ref imag-str 0))
 			       "" "+")
 			   (num-mold imag-str precision)
@@ -751,68 +751,68 @@
 			 (string-length str))))
 	    ;; The following use infinite? and nan? predicates.
 	    ;; (cond
-	    ;;  ((<= pad 0) str)
-	    ;;  ((inexact? width)
-	    ;;   (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-	    ;; 	     (tail (- pad head)))
-	    ;; 	(if (eq? radix 'hexadecimal)
-	    ;; 	    (if (or (char-numeric? char)
-	    ;; 		    (memv char '(#\a #\b #\c #\d #\e #\f
-	    ;; 				 #\A #\B #\C #\D #\E #\F)))
-	    ;; 		(let* ((len (string-length str))
-	    ;; 		       (index (str-xnum-index str 0 len)))
-	    ;; 		  (if index
-	    ;; 		      (string-append (substring str 0 index)
-	    ;; 				     (make-string head char)
-	    ;; 				     (substring str index len)
-	    ;; 				     (make-string tail char))
-	    ;; 		      (string-append (make-string head char)
-	    ;; 				     str
-	    ;; 				     (make-string tail char))))
-	    ;; 		(string-append (make-string head char)
-	    ;; 			       str
-	    ;; 			       (make-string tail char)))
-	    ;; 	    (if (char-numeric? char)
-	    ;; 		(if (or (infinite? object) (nan? object))
-	    ;; 		    (string-append (make-string pad char) str)
-	    ;; 		    (let* ((len (string-length str))
-	    ;; 			   (index (str-num-index str 0 len)))
-	    ;; 		      (if index
-	    ;; 			  (string-append (substring str 0 index)
-	    ;; 					 (make-string head char)
-	    ;; 					 (substring str index len)
-	    ;; 					 (make-string tail char))
-	    ;; 			  (string-append (make-string head char)
-	    ;; 					 str
-	    ;; 					 (make-string tail char)))))
-	    ;; 		(string-append (make-string head char)
-	    ;; 			       str
-	    ;; 			       (make-string tail char))))))
-	    ;;  ((positive? width)
-	    ;;   (if (eq? radix 'hexadecimal)
-	    ;; 	  (if (or (char-numeric? char)
-	    ;; 		  (memv char '(#\a #\b #\c #\d #\e #\f
-	    ;; 			       #\A #\B #\C #\D #\E #\F)))
-	    ;; 	      (let* ((len (string-length str))
-	    ;; 		     (index (str-xnum-index str 0 len)))
-	    ;; 		(if index
-	    ;; 		    (string-append (substring str 0 index)
-	    ;; 				   (make-string pad char)
-	    ;; 				   (substring str index len))
-	    ;; 		    (string-append (make-string pad char) str)))
-	    ;; 	      (string-append (make-string pad char) str))
-	    ;; 	  (if (char-numeric? char)
-	    ;; 	      (if (or (infinite? object) (nan? object))
-	    ;; 		  (string-append (make-string pad char) str)
-	    ;; 		  (let* ((len (string-length str))
-	    ;; 			 (index (str-num-index str 0 len)))
-	    ;; 		    (if index
-	    ;; 			(string-append (substring str 0 index)
-	    ;; 				       (make-string pad char)
-	    ;; 				       (substring str index len))
-	    ;; 			(string-append (make-string pad char) str))))
-	    ;; 	      (string-append (make-string pad char) str))))
-	    ;;  (else (string-append str (make-string pad char))))))
+	    ;;	((<= pad 0) str)
+	    ;;	((inexact? width)
+	    ;;	 (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
+	    ;;	     (tail (- pad head)))
+	    ;;	(if (eq? radix 'hexadecimal)
+	    ;;	    (if (or (char-numeric? char)
+	    ;;		    (memv char '(#\a #\b #\c #\d #\e #\f
+	    ;;				 #\A #\B #\C #\D #\E #\F)))
+	    ;;		(let* ((len (string-length str))
+	    ;;		       (index (str-xnum-index str 0 len)))
+	    ;;		  (if index
+	    ;;		      (string-append (substring str 0 index)
+	    ;;				     (make-string head char)
+	    ;;				     (substring str index len)
+	    ;;				     (make-string tail char))
+	    ;;		      (string-append (make-string head char)
+	    ;;				     str
+	    ;;				     (make-string tail char))))
+	    ;;		(string-append (make-string head char)
+	    ;;			       str
+	    ;;			       (make-string tail char)))
+	    ;;	    (if (char-numeric? char)
+	    ;;		(if (or (infinite? object) (nan? object))
+	    ;;		    (string-append (make-string pad char) str)
+	    ;;		    (let* ((len (string-length str))
+	    ;;			   (index (str-num-index str 0 len)))
+	    ;;		      (if index
+	    ;;			  (string-append (substring str 0 index)
+	    ;;					 (make-string head char)
+	    ;;					 (substring str index len)
+	    ;;					 (make-string tail char))
+	    ;;			  (string-append (make-string head char)
+	    ;;					 str
+	    ;;					 (make-string tail char)))))
+	    ;;		(string-append (make-string head char)
+	    ;;			       str
+	    ;;			       (make-string tail char))))))
+	    ;;	((positive? width)
+	    ;;	 (if (eq? radix 'hexadecimal)
+	    ;;	  (if (or (char-numeric? char)
+	    ;;		  (memv char '(#\a #\b #\c #\d #\e #\f
+	    ;;			       #\A #\B #\C #\D #\E #\F)))
+	    ;;	      (let* ((len (string-length str))
+	    ;;		     (index (str-xnum-index str 0 len)))
+	    ;;		(if index
+	    ;;		    (string-append (substring str 0 index)
+	    ;;				   (make-string pad char)
+	    ;;				   (substring str index len))
+	    ;;		    (string-append (make-string pad char) str)))
+	    ;;	      (string-append (make-string pad char) str))
+	    ;;	  (if (char-numeric? char)
+	    ;;	      (if (or (infinite? object) (nan? object))
+	    ;;		  (string-append (make-string pad char) str)
+	    ;;		  (let* ((len (string-length str))
+	    ;;			 (index (str-num-index str 0 len)))
+	    ;;		    (if index
+	    ;;			(string-append (substring str 0 index)
+	    ;;				       (make-string pad char)
+	    ;;				       (substring str index len))
+	    ;;			(string-append (make-string pad char) str))))
+	    ;;	      (string-append (make-string pad char) str))))
+	    ;;	(else (string-append str (make-string pad char))))))
 	    (cond
 	     ((<= pad 0) str)
 	     ((inexact? width)
@@ -907,36 +907,36 @@
 	  ;; (cond
 	  ;;  ((<= pad 0) str)
 	  ;;  ((inexact? width)
-	  ;; 	(let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-	  ;; 	       (tail (- pad head)))
-	  ;; 	  (if (char-numeric? char)
-	  ;; 	      (if (or (infinite? object) (nan? object))
-	  ;; 		  (string-append (make-string pad char) str)
-	  ;; 		  (let* ((len (string-length str))
-	  ;; 			 (index (str-num-index str 0 len)))
-	  ;; 		    (if index
-	  ;; 			(string-append (substring str 0 index)
-	  ;; 				       (make-string head char)
-	  ;; 				       (substring str index len)
-	  ;; 				       (make-string tail char))
-	  ;; 			(string-append (make-string head char)
-	  ;; 				       str
-	  ;; 				       (make-string tail char)))))
-	  ;; 	      (string-append (make-string head char)
-	  ;; 			     str
-	  ;; 			     (make-string tail char)))))
+	  ;;	(let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
+	  ;;	       (tail (- pad head)))
+	  ;;	  (if (char-numeric? char)
+	  ;;	      (if (or (infinite? object) (nan? object))
+	  ;;		  (string-append (make-string pad char) str)
+	  ;;		  (let* ((len (string-length str))
+	  ;;			 (index (str-num-index str 0 len)))
+	  ;;		    (if index
+	  ;;			(string-append (substring str 0 index)
+	  ;;				       (make-string head char)
+	  ;;				       (substring str index len)
+	  ;;				       (make-string tail char))
+	  ;;			(string-append (make-string head char)
+	  ;;				       str
+	  ;;				       (make-string tail char)))))
+	  ;;	      (string-append (make-string head char)
+	  ;;			     str
+	  ;;			     (make-string tail char)))))
 	  ;;  ((positive? width)
-	  ;; 	(if (char-numeric? char)
-	  ;; 	    (if (or (infinite? object) (nan? object))
-	  ;; 		(string-append (make-string pad char) str)
-	  ;; 		(let* ((len (string-length str))
-	  ;; 		       (index (str-num-index str 0 len)))
-	  ;; 		  (if index
-	  ;; 		      (string-append (substring str 0 index)
-	  ;; 				     (make-string pad char)
-	  ;; 				     (substring str index len))
-	  ;; 		      (string-append (make-string pad char) str))))
-	  ;; 	    (string-append (make-string pad char) str)))
+	  ;;	(if (char-numeric? char)
+	  ;;	    (if (or (infinite? object) (nan? object))
+	  ;;		(string-append (make-string pad char) str)
+	  ;;		(let* ((len (string-length str))
+	  ;;		       (index (str-num-index str 0 len)))
+	  ;;		  (if index
+	  ;;		      (string-append (substring str 0 index)
+	  ;;				     (make-string pad char)
+	  ;;				     (substring str index len))
+	  ;;		      (string-append (make-string pad char) str))))
+	  ;;	    (string-append (make-string pad char) str)))
 	  ;;  (else (string-append str (make-string pad char))))))
 	  (cond
 	   ((<= pad 0) str)
@@ -1020,9 +1020,9 @@
 	  ;; performance efficiency of `display' and `string-append'.
 	  ;; 1. (display (apply string-append pre-str str strs) port)
 	  ;; 2. (begin
-	  ;;      (display pre-str port)
-	  ;;      (display str port)
-	  ;;      (for-each (lambda (x) (display x port)) strs))
+	  ;;	  (display pre-str port)
+	  ;;	  (display str port)
+	  ;;	  (for-each (lambda (x) (display x port)) strs))
 	  (if pre-str
 	      (display (apply string-append pre-str str strs) port)
 	      (display (apply string-append str strs) port))
