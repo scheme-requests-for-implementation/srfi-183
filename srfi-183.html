@@ -103,14 +103,6 @@ Joo ChurlSoo
     [&lt;converter&gt;]			;pair
     [&lt;separator&gt;]			;vector
     [&lt;post-string&gt;] ...)		;string
-
-(cub &lt;object&gt;
-    [&lt;width&gt;]				;integer
-    [&lt;char&gt;]				;char
-    [&lt;writer&gt;]				;procedure
-    [&lt;list-for-number&gt;]			;list
-    [&lt;converter&gt;]			;pair
-    [&lt;separator&gt;]			;vector
 </pre>
 
 <p>The &lt;list-for-number&gt; is a list whose elements are
@@ -270,7 +262,6 @@ Joo ChurlSoo
       (file &quot;today.txt&quot;))
   (for-each
    (lambda (x y)
-     ;; (fox x #t 10 (cub y 15 '(2) record-writer '#(&quot;,&quot;)))
      (fox x #t 10 (fox y 15 '(2) record-writer '#(&quot;,&quot;)))
      (fox x #t 10)
      (fox y #t 15 '(2) (if (example? y) record-display display) '#(&quot;,&quot;))

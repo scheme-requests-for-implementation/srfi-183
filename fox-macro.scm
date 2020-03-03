@@ -1,4 +1,4 @@
-;;; The implementation below requires SRFI-6 and SRFI-182.
+;;; The implementation below requires SRFI-6 (Basic string ports).
 ;;; For compatibility with R6RS:
 ;;; (define inexact->exact exact)
 ;;; (define exact->inexact inexact)
@@ -494,6 +494,65 @@
 				       "e+"
 				       (number->string (- d-index 1)))))))))))
 
+;; define-macro
+(define-macro (let-fox* z vars . body)
+  (let ((var (car vars)))
+    (let ((n (car var)) (d (cadr var)) (t (caddr var)))
+      (if (null? (cdr vars))
+	  `(let ((,n (if (null? ,z)
+			 ,d
+			 (if (null? (cdr ,z))
+			     (let ((,n (car ,z)))
+			       (if ,t ,n (error 'fox "too many argument" ,z)))
+			     (error 'fox "too many arguments" ,z)))))
+	     ,@body)
+	  (let ((head (gensym)) (tail (gensym)))
+	    `(let ((,n (if (null? ,z)
+			   ,d
+			   (let ((,n (car ,z)))
+			     (if ,t
+				 (begin (set! ,z (cdr ,z)) ,n)
+				 (let lp ((,head (list ,n)) (,tail (cdr ,z)))
+				   (if (null? ,tail)
+				       ,d
+				       (let ((,n (car ,tail)))
+					 (if ,t
+					     (begin
+					       (set! ,z (append (reverse ,head)
+								(cdr ,tail)))
+					       ,n)
+					     (lp (cons ,n ,head)
+						 (cdr ,tail)))))))))))
+	       (let-fox* ,z ,(cdr vars) ,@body)))))))
+
+;; define-syntax
+;; (define-syntax let-fox*
+;;   (syntax-rules ()
+;;     ((let-fox* z ((n d t)) bd ...)
+;;      (let ((n (if (null? z)
+;; 		  d
+;; 		  (if (null? (cdr z))
+;; 		      (let ((n (car z)))
+;; 			(if t n (error 'fox "too many argument" z)))
+;; 		      (error 'fox "too many arguments" z)))))
+;;        bd ...))
+;;     ((let-fox* z ((n d t) ndt ...) bd ...)
+;;      (let ((n (if (null? z)
+;; 		  d
+;; 		  (let ((n (car z)))
+;; 		    (if t
+;; 			(begin (set! z (cdr z)) n)
+;; 			(let lp ((head (list n)) (tail (cdr z)))
+;; 			  (if (null? tail)
+;; 			      d
+;; 			      (let ((n (car tail)))
+;; 				(if t
+;; 				    (begin (set! z (append (reverse head)
+;; 							   (cdr tail)))
+;; 					   n)
+;; 				    (lp (cons n head) (cdr tail)))))))))))
+;;        (let-fox* z (ndt ...) bd ...)))))
+
 ;; (define (integer/string/procedure? is)
 ;;   (or (integer? is) (string? is) (procedure? is)))
 
@@ -545,220 +604,258 @@
 		    ((boolean? object) (if object "#t" "#f"))
 		    (else (object->string object display)))
 		   strs)
-	    (alet* ((opt rest
-			 (,port #f (or (boolean? port) (output-port? port)))
-			 (,width 0 (integer? width))
-			 (,char #\space (char? char))
-			 (,list-for-number #f (list? list-for-number))
-			 (,writer display (procedure? writer))
-			 (,converter #f (pair? converter))
-			 (,separator #f (vector? separator)))
-		    (str
+	    (let-fox* rest
+	      ((port #f (or (boolean? port) (output-port? port))) ;boolean, port
+	       (width 0 (integer? width))			  ;integer
+	       (char #\space (char? char))			  ;char
+	       (list-for-number #f (list? list-for-number))	  ;list
+	       (writer display (procedure? writer))		  ;procedure
+	       (converter #f (pair? converter))			  ;pair
+	       (separator #f (vector? separator)))		  ;vector
+	      (let ((str
 (if (number? object)
     (if (and list-for-number (or (eq? writer display) (eq? writer write)))
-	(alet* ((opt list-for-number
-		     (,precision #f (and (integer? precision) (not (negative? precision))))
-		     (,point #f (memq point '(fixed floating)))
-		     (,radix 'decimal (memq radix '(decimal octal binary hexadecimal)))
-		     (,sign #f (eq? 'sign sign))
-		     (,exactness #f (memq exactness '(exact inexact))))
-		(inexact-sign
-		 (and (not (eq? radix 'decimal))
-		      (or (and (or precision point)
-			       (error "fox: non-decimal cannot have a decimal point" radix precision))
-			  (and (inexact? object) (not (eq? exactness 'exact)))
-			  (eq? exactness 'inexact))
-		      "#i"))
-		(str
-		 (cond
-		  (point
-		   (if (eq? point 'fixed)
-		       ;; fixed-point
-		       (if precision
-			   (if (real? object)
-			       (fix-mold (make-fix object) precision)
-			       (let ((imag-str (make-fix (imag-part object))))
-				 (string-append
-				  (fix-mold (make-fix (real-part object))
-					    precision)
-				  ;; for N+0.0i
-				  ;; (if (char-numeric? (string-ref imag-str 0))
-				  ;;     "+" "")
-				  (if (char=? #\- (string-ref imag-str 0))
-				      "" "+")
-				  (fix-mold imag-str precision)
-				  "i")))
-			   (if (real? object)
-			       (make-fix object)
-			       (let ((imag-str (make-fix (imag-part object))))
-				 (string-append
-				  (make-fix (real-part object))
-				  ;; for N+0.0i
-				  ;; (if (char-numeric? (string-ref imag-str 0))
-				  ;;     "+" "")
-				  (if (char=? #\- (string-ref imag-str 0))
-				      "" "+")
-				  imag-str
-				  "i"))))
-		       ;; floating-point
-		       (if precision
-			   (if (real? object)
-			       (exp-mold (make-exp object) precision)
-			       (let ((imag-str (make-exp (imag-part object))))
-				 (string-append
-				  (exp-mold (make-exp (real-part object))
-					    precision)
-				  ;; for N+0.0i
-				  ;; (if (char-numeric? (string-ref imag-str 0))
-				  ;;     "+" "")
-				  (if (char=? #\- (string-ref imag-str 0))
-				      "" "+")
-				  (exp-mold imag-str precision)
-				  "i")))
-			   (if (real? object)
-			       (make-exp object)
-			       (let ((imag-str (make-exp (imag-part object))))
-				 (string-append
-				  (make-exp (real-part object))
-				  ;; for N+0.0i
-				  ;; (if (char-numeric? (string-ref imag-str 0))
-				  ;;     "+" "")
-				  (if (char=? #\- (string-ref imag-str 0))
-				      "" "+")
-				  imag-str
-				  "i"))))))
-		  (precision
-		   (if (real? object)
-		       (num-mold (number->string (exact->inexact object))
-				 precision)
-		       (let ((imag-str (number->string
-					(exact->inexact (imag-part object)))))
-			 (string-append
-			  (num-mold (number->string
-				     (exact->inexact (real-part object)))
-				    precision)
-			  ;; for N+0.0i
-			  ;; (if (char-numeric? (string-ref imag-str 0))
-			  ;;     "+" "")
-			  (if (char=? #\- (string-ref imag-str 0))
-			      "" "+")
-			  (num-mold imag-str precision)
-			  "i"))))
-		  (else
-		   (number->string
-		    (cond
-		     (inexact-sign (inexact->exact object))
-		     (exactness (if (eq? exactness 'exact)
-				    (inexact->exact object)
-				    (exact->inexact object)))
-		     (else object))
-		    (cdr (assq radix '((decimal . 10)
-				       (octal . 8)
-				       (hexadecimal . 16)
-				       (binary . 2))))))))
-		(str (if (and separator (eq? radix 'decimal))
-			 (if (string? (vector-ref separator 0))
-			     (num-separate str
-					   (vector-ref separator 0)
-					   (if (= 1 (vector-length separator))
-					       3
-					       (abs (vector-ref separator 1)))
-					   (negative? (real-part object)))
-			     (num-separate str
-					   (if (= 1 (vector-length separator))
-					       ","
-					       (vector-ref separator 1))
-					   (abs (vector-ref separator 0))
-					   (negative? (real-part object))))
-			 str))
-		(str (string-append
-		      (or inexact-sign "")
-		      (if (and (eq? exactness 'exact) (or precision point))
-			  "#e" "")
-		      (cdr (assq radix '((decimal . "")
-					 (octal . "#o")
-					 (hexadecimal . "#x")
-					 (binary . "#b"))))
-		      (if (and sign
-			       ;;(positive? (real-part object)))
-			       ;; for 0.0
-			       (let ((ch (string-ref str 0)))
-				 (not (or (char=? #\- ch)
-					  (char=? #\+ ch))))) ;for +inf.0
-			  "+" "")
-		      str))
-		(str (if converter (str-convert str converter) str))
-		(pad (- (abs (if (exact? width) width (inexact->exact width)))
-			(string-length str))))
-	  ;; The following use infinite? and nan? predicates.
-	  ;; (cond
-	  ;;  ((<= pad 0) str)
-	  ;;  ((inexact? width)
-	  ;;   (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-	  ;; 	     (tail (- pad head)))
-	  ;; 	(if (eq? radix 'hexadecimal)
-	  ;; 	    (if (or (char-numeric? char)
-	  ;; 		    (memv char '(#\a #\b #\c #\d #\e #\f
-	  ;; 				 #\A #\B #\C #\D #\E #\F)))
-	  ;; 		(let* ((len (string-length str))
-	  ;; 		       (index (str-xnum-index str 0 len)))
-	  ;; 		  (if index
-	  ;; 		      (string-append (substring str 0 index)
-	  ;; 				     (make-string head char)
-	  ;; 				     (substring str index len)
-	  ;; 				     (make-string tail char))
-	  ;; 		      (string-append (make-string head char)
-	  ;; 				     str
-	  ;; 				     (make-string tail char))))
-	  ;; 		(string-append (make-string head char)
-	  ;; 			       str
-	  ;; 			       (make-string tail char)))
-	  ;; 	    (if (char-numeric? char)
-	  ;; 		(if (or (infinite? object) (nan? object))
-	  ;; 		    (string-append (make-string pad char) str)
-	  ;; 		    (let* ((len (string-length str))
-	  ;; 			   (index (str-num-index str 0 len)))
-	  ;; 		      (if index
-	  ;; 			  (string-append (substring str 0 index)
-	  ;; 					 (make-string head char)
-	  ;; 					 (substring str index len)
-	  ;; 					 (make-string tail char))
-	  ;; 			  (string-append (make-string head char)
-	  ;; 					 str
-	  ;; 					 (make-string tail char)))))
-	  ;; 		(string-append (make-string head char)
-	  ;; 			       str
-	  ;; 			       (make-string tail char))))))
-	  ;;  ((positive? width)
-	  ;;   (if (eq? radix 'hexadecimal)
-	  ;; 	  (if (or (char-numeric? char)
-	  ;; 		  (memv char '(#\a #\b #\c #\d #\e #\f
-	  ;; 			       #\A #\B #\C #\D #\E #\F)))
-	  ;; 	      (let* ((len (string-length str))
-	  ;; 		     (index (str-xnum-index str 0 len)))
-	  ;; 		(if index
-	  ;; 		    (string-append (substring str 0 index)
-	  ;; 				   (make-string pad char)
-	  ;; 				   (substring str index len))
-	  ;; 		    (string-append (make-string pad char) str)))
-	  ;; 	      (string-append (make-string pad char) str))
-	  ;; 	  (if (char-numeric? char)
-	  ;; 	      (if (or (infinite? object) (nan? object))
-	  ;; 		  (string-append (make-string pad char) str)
-	  ;; 		  (let* ((len (string-length str))
-	  ;; 			 (index (str-num-index str 0 len)))
-	  ;; 		    (if index
-	  ;; 			(string-append (substring str 0 index)
-	  ;; 				       (make-string pad char)
-	  ;; 				       (substring str index len))
-	  ;; 			(string-append (make-string pad char) str))))
-	  ;; 	      (string-append (make-string pad char) str))))
-	  ;;  (else (string-append str (make-string pad char))))))
-	  (cond
-	   ((<= pad 0) str)
-	   ((inexact? width)
-	    (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
-		   (tail (- pad head)))
+	(let-fox* list-for-number
+	  ((precision #f (and (integer? precision) (not (negative? precision))))
+	   (point #f (memq point '(fixed floating)))
+	   (radix 'decimal (memq radix '(decimal octal binary hexadecimal)))
+	   (sign #f (eq? 'sign sign))
+	   (exactness #f (memq exactness '(exact inexact))))
+	  (let* ((inexact-sign
+		  (and (not (eq? radix 'decimal))
+		       (or (and (or precision point)
+				(error "fox: non-decimal cannot have a decimal point" radix precision))
+			   (and (inexact? object) (not (eq? exactness 'exact)))
+			   (eq? exactness 'inexact))
+		       "#i"))
+		 (str
+		  (cond
+		   (point
+		    (if (eq? point 'fixed)
+			;; fixed-point
+			(if precision
+			    (if (real? object)
+				(fix-mold (make-fix object) precision)
+				(let ((imag-str (make-fix (imag-part object))))
+				  (string-append
+				   (fix-mold (make-fix (real-part object))
+					     precision)
+				   ;; for N+0.0i
+				   ;; (if (char-numeric? (string-ref imag-str 0))
+				   ;;     "+" "")
+				   (if (char=? #\- (string-ref imag-str 0))
+				       "" "+")
+				   (fix-mold imag-str precision)
+				   "i")))
+			    (if (real? object)
+				(make-fix object)
+				(let ((imag-str (make-fix (imag-part object))))
+				  (string-append
+				   (make-fix (real-part object))
+				   ;; for N+0.0i
+				   ;; (if (char-numeric? (string-ref imag-str 0))
+				   ;;     "+" "")
+				   (if (char=? #\- (string-ref imag-str 0))
+				       "" "+")
+				   imag-str
+				   "i"))))
+			;; floating-point
+			(if precision
+			    (if (real? object)
+				(exp-mold (make-exp object) precision)
+				(let ((imag-str (make-exp (imag-part object))))
+				  (string-append
+				   (exp-mold (make-exp (real-part object))
+					     precision)
+				   ;; for N+0.0i
+				   ;; (if (char-numeric? (string-ref imag-str 0))
+				   ;;     "+" "")
+				   (if (char=? #\- (string-ref imag-str 0))
+				       "" "+")
+				   (exp-mold imag-str precision)
+				   "i")))
+			    (if (real? object)
+				(make-exp object)
+				(let ((imag-str (make-exp (imag-part object))))
+				  (string-append
+				   (make-exp (real-part object))
+				   ;; for N+0.0i
+				   ;; (if (char-numeric? (string-ref imag-str 0))
+				   ;;     "+" "")
+				   (if (char=? #\- (string-ref imag-str 0))
+				       "" "+")
+				   imag-str
+				   "i"))))))
+		   (precision
+		    (if (real? object)
+			(num-mold (number->string (exact->inexact object))
+				  precision)
+			(let ((imag-str (number->string
+					 (exact->inexact (imag-part object)))))
+			  (string-append
+			   (num-mold (number->string
+				      (exact->inexact (real-part object)))
+				     precision)
+			   ;; for N+0.0i
+			   ;; (if (char-numeric? (string-ref imag-str 0))
+			   ;;     "+" "")
+			   (if (char=? #\- (string-ref imag-str 0))
+			       "" "+")
+			   (num-mold imag-str precision)
+			   "i"))))
+		   (else
+		    (number->string
+		     (cond
+		      (inexact-sign (inexact->exact object))
+		      (exactness (if (eq? exactness 'exact)
+				     (inexact->exact object)
+				     (exact->inexact object)))
+		      (else object))
+		     (cdr (assq radix '((decimal . 10)
+					(octal . 8)
+					(hexadecimal . 16)
+					(binary . 2))))))))
+		 (str (if (and separator (eq? radix 'decimal))
+			  (if (string? (vector-ref separator 0))
+			      (num-separate str
+					    (vector-ref separator 0)
+					    (if (= 1 (vector-length separator))
+						3
+						(abs (vector-ref separator 1)))
+					    (negative? (real-part object)))
+			      (num-separate str
+					    (if (= 1 (vector-length separator))
+						","
+						(vector-ref separator 1))
+					    (abs (vector-ref separator 0))
+					    (negative? (real-part object))))
+			  str))
+		 (str (string-append
+		       (or inexact-sign "")
+		       (if (and (eq? exactness 'exact) (or precision point))
+			   "#e" "")
+		       (cdr (assq radix '((decimal . "")
+					  (octal . "#o")
+					  (hexadecimal . "#x")
+					  (binary . "#b"))))
+		       (if (and sign
+				;;(positive? (real-part object)))
+				;; for 0.0
+				(let ((ch (string-ref str 0)))
+				  (not (or (char=? #\- ch)
+					   (char=? #\+ ch))))) ;for +inf.0
+			   "+" "")
+		       str))
+		 (str (if converter (str-convert str converter) str))
+		 (pad (- (abs (if (exact? width) width (inexact->exact width)))
+			 (string-length str))))
+	    ;; The following use infinite? and nan? predicates.
+	    ;; (cond
+	    ;;  ((<= pad 0) str)
+	    ;;  ((inexact? width)
+	    ;;   (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
+	    ;; 	     (tail (- pad head)))
+	    ;; 	(if (eq? radix 'hexadecimal)
+	    ;; 	    (if (or (char-numeric? char)
+	    ;; 		    (memv char '(#\a #\b #\c #\d #\e #\f
+	    ;; 				 #\A #\B #\C #\D #\E #\F)))
+	    ;; 		(let* ((len (string-length str))
+	    ;; 		       (index (str-xnum-index str 0 len)))
+	    ;; 		  (if index
+	    ;; 		      (string-append (substring str 0 index)
+	    ;; 				     (make-string head char)
+	    ;; 				     (substring str index len)
+	    ;; 				     (make-string tail char))
+	    ;; 		      (string-append (make-string head char)
+	    ;; 				     str
+	    ;; 				     (make-string tail char))))
+	    ;; 		(string-append (make-string head char)
+	    ;; 			       str
+	    ;; 			       (make-string tail char)))
+	    ;; 	    (if (char-numeric? char)
+	    ;; 		(if (or (infinite? object) (nan? object))
+	    ;; 		    (string-append (make-string pad char) str)
+	    ;; 		    (let* ((len (string-length str))
+	    ;; 			   (index (str-num-index str 0 len)))
+	    ;; 		      (if index
+	    ;; 			  (string-append (substring str 0 index)
+	    ;; 					 (make-string head char)
+	    ;; 					 (substring str index len)
+	    ;; 					 (make-string tail char))
+	    ;; 			  (string-append (make-string head char)
+	    ;; 					 str
+	    ;; 					 (make-string tail char)))))
+	    ;; 		(string-append (make-string head char)
+	    ;; 			       str
+	    ;; 			       (make-string tail char))))))
+	    ;;  ((positive? width)
+	    ;;   (if (eq? radix 'hexadecimal)
+	    ;; 	  (if (or (char-numeric? char)
+	    ;; 		  (memv char '(#\a #\b #\c #\d #\e #\f
+	    ;; 			       #\A #\B #\C #\D #\E #\F)))
+	    ;; 	      (let* ((len (string-length str))
+	    ;; 		     (index (str-xnum-index str 0 len)))
+	    ;; 		(if index
+	    ;; 		    (string-append (substring str 0 index)
+	    ;; 				   (make-string pad char)
+	    ;; 				   (substring str index len))
+	    ;; 		    (string-append (make-string pad char) str)))
+	    ;; 	      (string-append (make-string pad char) str))
+	    ;; 	  (if (char-numeric? char)
+	    ;; 	      (if (or (infinite? object) (nan? object))
+	    ;; 		  (string-append (make-string pad char) str)
+	    ;; 		  (let* ((len (string-length str))
+	    ;; 			 (index (str-num-index str 0 len)))
+	    ;; 		    (if index
+	    ;; 			(string-append (substring str 0 index)
+	    ;; 				       (make-string pad char)
+	    ;; 				       (substring str index len))
+	    ;; 			(string-append (make-string pad char) str))))
+	    ;; 	      (string-append (make-string pad char) str))))
+	    ;;  (else (string-append str (make-string pad char))))))
+	    (cond
+	     ((<= pad 0) str)
+	     ((inexact? width)
+	      (let* ((head ((if (positive? width) ceiling floor) (/ pad 2)))
+		     (tail (- pad head)))
+		(if (eq? radix 'hexadecimal)
+		    (if (or (char-numeric? char)
+			    (memv char '(#\a #\b #\c #\d #\e #\f
+					 #\A #\B #\C #\D #\E #\F)))
+			(let* ((len (string-length str))
+			       (index (str-xnum-index str 0 len)))
+			  (if index
+			      (string-append (substring str 0 index)
+					     (make-string head char)
+					     (substring str index len)
+					     (make-string tail char))
+			      (string-append (make-string head char)
+					     str
+					     (make-string tail char))))
+			(string-append (make-string head char)
+				       str
+				       (make-string tail char)))
+		    (if (char-numeric? char)
+			(let* ((len (string-length str))
+			       (index (str-num-index str 0 len)))
+			  (if index
+			      (if (or (zero? index)
+				      ;; for infinities and nans
+				      (char=? (string-ref str (- index 1)) #\.))
+				  (string-append (make-string head char)
+						 str
+						 (make-string tail char))
+				  (string-append (substring str 0 index)
+						 (make-string head char)
+						 (substring str index len)
+						 (make-string tail char)))
+			      (string-append (make-string head char)
+					     str
+					     (make-string tail char))))
+			(string-append (make-string head char)
+				       str
+				       (make-string tail char))))))
+	     ((positive? width)
 	      (if (eq? radix 'hexadecimal)
 		  (if (or (char-numeric? char)
 			  (memv char '(#\a #\b #\c #\d #\e #\f
@@ -767,15 +864,10 @@
 			     (index (str-xnum-index str 0 len)))
 			(if index
 			    (string-append (substring str 0 index)
-					   (make-string head char)
-					   (substring str index len)
-					   (make-string tail char))
-			    (string-append (make-string head char)
-					   str
-					   (make-string tail char))))
-		      (string-append (make-string head char)
-				     str
-				     (make-string tail char)))
+					   (make-string pad char)
+					   (substring str index len))
+			    (string-append (make-string pad char) str)))
+		      (string-append (make-string pad char) str))
 		  (if (char-numeric? char)
 		      (let* ((len (string-length str))
 			     (index (str-num-index str 0 len)))
@@ -783,46 +875,13 @@
 			    (if (or (zero? index)
 				    ;; for infinities and nans
 				    (char=? (string-ref str (- index 1)) #\.))
-				(string-append (make-string head char)
-					       str
-					       (make-string tail char))
+				(string-append (make-string pad char) str)
 				(string-append (substring str 0 index)
-					       (make-string head char)
-					       (substring str index len)
-					       (make-string tail char)))
-			    (string-append (make-string head char)
-					   str
-					   (make-string tail char))))
-		      (string-append (make-string head char)
-				     str
-				     (make-string tail char))))))
-	   ((positive? width)
-	    (if (eq? radix 'hexadecimal)
-		(if (or (char-numeric? char)
-			(memv char '(#\a #\b #\c #\d #\e #\f
-				     #\A #\B #\C #\D #\E #\F)))
-		    (let* ((len (string-length str))
-			   (index (str-xnum-index str 0 len)))
-		      (if index
-			  (string-append (substring str 0 index)
-					 (make-string pad char)
-					 (substring str index len))
-			  (string-append (make-string pad char) str)))
-		    (string-append (make-string pad char) str))
-		(if (char-numeric? char)
-		    (let* ((len (string-length str))
-			   (index (str-num-index str 0 len)))
-		      (if index
-			  (if (or (zero? index)
-				  ;; for infinities and nans
-				  (char=? (string-ref str (- index 1)) #\.))
-			      (string-append (make-string pad char) str)
-			      (string-append (substring str 0 index)
-					     (make-string pad char)
-					     (substring str index len)))
-			  (string-append (make-string pad char) str)))
-		    (string-append (make-string pad char) str))))
-	   (else (string-append str (make-string pad char)))))
+					       (make-string pad char)
+					       (substring str index len)))
+			    (string-append (make-string pad char) str)))
+		      (string-append (make-string pad char) str))))
+	     (else (string-append str (make-string pad char))))))
 	(let* ((str (if (or (eq? writer display) (eq? writer write))
 			(number->string object)
 			(object->string object writer)))
@@ -976,6 +1035,6 @@
 	    (apply string-append str strs))
 	(if pre-str
 	    (string-append pre-str str)
-	    str))))))))
+	    str)))))))))
 
 ;;; eof
