@@ -1,4 +1,4 @@
-;;; The implementation below requires SRFI-6 and SRFI-182.
+;;; The implementation below requires SRFI-6, SRFI-23, and SRFI-182.
 ;;; For compatibility with R6RS:
 ;;; (define inexact->exact exact)
 ;;; (define exact->inexact inexact)
@@ -545,23 +545,23 @@
 		    ((boolean? object) (if object "#t" "#f"))
 		    (else (object->string object display)))
 		   strs)
-	    (alet* ((opt rest
-			 (,port #f (or (boolean? port) (output-port? port)))
-			 (,width 0 (integer? width))
-			 (,char #\space (char? char))
-			 (,list-for-number #f (list? list-for-number))
-			 (,writer display (procedure? writer))
-			 (,converter #f (pair? converter))
-			 (,separator #f (vector? separator)))
+	    (alet* ((() rest
+		     (,port #f (or (boolean? port) (output-port? port)))
+		     (,width 0 (integer? width))
+		     (,char #\space (char? char))
+		     (,list-for-number #f (list? list-for-number))
+		     (,writer display (procedure? writer))
+		     (,converter #f (pair? converter))
+		     (,separator #f (vector? separator)))
 		    (str
 (if (number? object)
     (if (and list-for-number (or (eq? writer display) (eq? writer write)))
-	(alet* ((opt list-for-number
-		     (,precision #f (and (integer? precision) (not (negative? precision))))
-		     (,point #f (memq point '(fixed floating)))
-		     (,radix 'decimal (memq radix '(decimal octal binary hexadecimal)))
-		     (,sign #f (eq? 'sign sign))
-		     (,exactness #f (memq exactness '(exact inexact))))
+	(alet* ((() list-for-number
+		 (,precision #f (and (integer? precision) (not (negative? precision))))
+		 (,point #f (memq point '(fixed floating)))
+		 (,radix 'decimal (memq radix '(decimal octal binary hexadecimal)))
+		 (,sign #f (eq? 'sign sign))
+		 (,exactness #f (memq exactness '(exact inexact))))
 		(inexact-sign
 		 (and (not (eq? radix 'decimal))
 		      (or (and (or precision point)
