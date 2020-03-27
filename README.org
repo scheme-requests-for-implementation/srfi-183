@@ -6,7 +6,7 @@
 
 This repository hosts [[https://srfi.schemers.org/srfi-183/][SRFI 183]]: Another format procedure, Fox, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
-This SRFI is in /draft/ status.
+This SRFI is in /withdrawn/ status.
 
 See also [[https://srfi.schemers.org/srfi-54/][SRFI 54: Formatting]].
 
